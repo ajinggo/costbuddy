@@ -1464,12 +1464,14 @@ input[type="range"]::-webkit-slider-thumb {
   margin-right: 10px;
 }
 
-/* Keep the lot-matrix heading compact and aligned on one baseline. */
+/* Keep compact result headings aligned on one baseline. */
+.stage-section .section-title-row,
 .comparison-section .section-title-row {
   flex-wrap: nowrap;
   align-items: baseline;
 }
 
+.stage-section .section-title-row > div,
 .comparison-section .section-title-row > div {
   display: flex;
   min-width: 0;
@@ -1477,12 +1479,14 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 7px;
 }
 
+.stage-section .section-title-row .panel-kicker,
 .comparison-section .section-title-row .panel-kicker {
   flex: 0 0 auto;
   margin: 0;
   white-space: nowrap;
 }
 
+.stage-section .section-title-row h2,
 .comparison-section .section-title-row h2 {
   overflow: hidden;
   font-size: 11.5px;
@@ -1491,6 +1495,7 @@ input[type="range"]::-webkit-slider-thumb {
   white-space: nowrap;
 }
 
+.stage-section .section-title-row > span,
 .comparison-section .section-title-row > span {
   flex: 0 0 auto;
   line-height: 1;
