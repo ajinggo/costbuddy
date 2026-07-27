@@ -1543,3 +1543,341 @@ input[type="range"]::-webkit-slider-thumb {
   line-height: 1.15;
   white-space: nowrap;
 }
+
+/* Stronger lowercase wordmark for the costbuddy brand. */
+.brand-group .eyebrow {
+  color: #4f65e8;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.025em;
+}
+
+/* Multi-stock holding book: compact controls stay inside the one-screen workspace. */
+#holdingCount,
+#scenarioCount {
+  color: var(--blue);
+  font-weight: 850;
+}
+
+.new-measurement-button svg {
+  stroke-width: 1.9;
+}
+
+.save-holding-button {
+  display: inline-flex;
+  height: 24px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  color: var(--blue);
+  border: 1px solid #b2ccff;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 8.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.save-holding-button:hover {
+  border-color: var(--blue);
+}
+
+.save-holding-button svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.save-holding-button.is-saved {
+  color: var(--green);
+  border-color: #abefc6;
+}
+
+.save-holding-button.is-dirty {
+  color: var(--amber);
+  border-color: #f7c98b;
+}
+
+.dialog-secondary {
+  min-width: 76px;
+  height: 32px;
+  padding: 0 13px;
+  color: #344054;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.dialog-secondary:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+
+.compact-dialog-button {
+  min-width: 0;
+  height: 29px;
+  padding-inline: 11px;
+}
+
+.danger-text {
+  color: #b42318;
+}
+
+.holding-book-dialog {
+  width: min(760px, calc(100vw - 32px));
+}
+
+.holding-book-dialog-body {
+  max-height: min(500px, calc(100vh - 150px));
+  overflow: hidden;
+}
+
+.holding-book-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.holding-book-summary p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.holding-list {
+  display: grid;
+  max-height: min(360px, calc(100vh - 285px));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.holding-card {
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: transparent;
+}
+
+.holding-card.is-current {
+  border-color: #b2ccff;
+  box-shadow: inset 3px 0 0 var(--blue);
+}
+
+.holding-card-header,
+.holding-card-footer,
+.holding-card-title,
+.holding-card-actions {
+  display: flex;
+  align-items: center;
+}
+
+.holding-card-header,
+.holding-card-footer {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.holding-card-title {
+  min-width: 0;
+  gap: 7px;
+}
+
+.holding-card-title strong {
+  color: var(--ink);
+  font-size: 12px;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.holding-card-title span {
+  overflow: hidden;
+  color: #344054;
+  font-size: 10.5px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.holding-card-status {
+  flex: 0 0 auto;
+  color: var(--faint);
+  font-size: 8.5px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.holding-card.is-current .holding-card-status {
+  color: var(--blue);
+}
+
+.holding-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 11px;
+  margin: 10px 0;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.holding-card-metrics div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.holding-card-metrics span {
+  color: var(--faint);
+  font-size: 8.5px;
+  white-space: nowrap;
+}
+
+.holding-card-metrics strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.holding-card-footer time {
+  color: var(--faint);
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.holding-card-actions {
+  flex: 0 0 auto;
+  gap: 5px;
+}
+
+.holding-card-actions button {
+  height: 25px;
+  padding: 0 8px;
+  color: var(--blue);
+  border: 1px solid #b2ccff;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 8.5px;
+  font-weight: 780;
+}
+
+.holding-card-actions button:hover {
+  border-color: var(--blue);
+}
+
+.holding-card-actions .holding-delete-button {
+  color: var(--muted);
+  border-color: var(--line-strong);
+}
+
+.holding-card-actions .holding-delete-button.is-confirming {
+  color: #b42318;
+  border-color: #fda29b;
+}
+
+.holding-empty {
+  display: grid;
+  min-height: 165px;
+  place-content: center;
+  gap: 7px;
+  text-align: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+}
+
+.holding-empty[hidden] {
+  display: none;
+}
+
+.holding-empty strong {
+  color: #344054;
+  font-size: 12px;
+}
+
+.holding-empty span {
+  color: var(--faint);
+  font-size: 9.5px;
+}
+
+.unsaved-dialog {
+  width: min(540px, calc(100vw - 32px));
+}
+
+.unsaved-dialog-body {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.unsaved-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  color: var(--amber);
+  border: 1px solid #f7c98b;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.unsaved-dialog-body strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.unsaved-dialog-body p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.unsaved-dialog-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 1180px) {
+  .local-badge {
+    display: none;
+  }
+
+  .header-disclaimer {
+    max-width: 255px;
+    padding-inline: 6px;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .header-tool-button,
+  .reset-button {
+    padding-inline: 6px;
+  }
+
+  .controls-header .live-chip {
+    display: none;
+  }
+}

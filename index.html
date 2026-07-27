@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="小算盘">
   <title>小算盘 · costbuddy</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260727-16">
+  <link rel="stylesheet" href="styles.css?v=20260727-19">
 </head>
 <body>
   <main class="app-shell">
@@ -35,9 +35,17 @@
           <p class="disclaimer header-disclaimer">结果仅用于持仓测算，不构成投资建议；暂不包含汇率及其他费用。股数为 0 时，该侧手续费不计入。</p>
           <div class="header-actions">
             <span class="local-badge" title="所有输入仅保存在当前浏览器，不会上传服务器"><i aria-hidden="true"></i>本地计算 · 数据不上云</span>
+            <button class="header-tool-button" id="holdingBookButton" type="button" aria-haspopup="dialog">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3.5h9.5A2.5 2.5 0 0 1 16 6v10.5H6A2 2 0 0 1 4 14.5z"/><path d="M4 14.5a2 2 0 0 1 2-2h10M7 6.5h6M7 9h4"/></svg>
+              持仓簿 <span id="holdingCount">0</span>
+            </button>
+            <button class="header-tool-button new-measurement-button" id="newMeasurementButton" type="button">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>
+              新建测算
+            </button>
             <button class="header-tool-button" id="scenarioButton" type="button" aria-haspopup="dialog">
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4.5h5v5H4zM11 10.5h5v5h-5zM9 7h3.2a1.8 1.8 0 0 1 1.8 1.8v1.7M6.5 9.5v2.2A1.8 1.8 0 0 0 8.3 13H11"/></svg>
-              方案 <span id="scenarioCount">0/2</span>
+              本股方案 <span id="scenarioCount">0/2</span>
             </button>
             <button class="header-tool-button" id="sharePlanButton" type="button">
               <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="10" r="2"/><circle cx="14.5" cy="5" r="2"/><circle cx="14.5" cy="15" r="2"/><path d="m6.8 9 5.8-3M6.8 11l5.8 3"/></svg>
@@ -62,6 +70,10 @@
             <h2>交易参数</h2>
           </div>
           <div class="controls-header-tools">
+            <button class="save-holding-button" id="saveHoldingButton" type="button">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3.5h10l2 2v11H4z"/><path d="M7 3.5v5h6v-5M7 16.5v-5h6v5"/></svg>
+              <span id="saveHoldingLabel">保存当前</span>
+            </button>
             <button class="fee-mode-button" id="feeSettingsButton" type="button" aria-haspopup="dialog">
               费用：<span id="feeModeLabel">手动</span>
             </button>
@@ -537,8 +549,56 @@
     </div>
   </dialog>
 
+  <dialog class="app-dialog holding-book-dialog" id="holdingBookDialog" aria-labelledby="holdingBookDialogTitle">
+    <div class="dialog-header">
+      <div>
+        <p class="panel-kicker">HOLDING BOOK</p>
+        <h2 id="holdingBookDialogTitle">持仓簿</h2>
+      </div>
+      <button class="dialog-close" type="button" data-close-dialog aria-label="关闭">×</button>
+    </div>
+    <div class="dialog-body holding-book-dialog-body">
+      <div class="holding-book-summary">
+        <p>保存不同股票的测算进度，之后可以从原来的数据继续。</p>
+        <button class="dialog-secondary compact-dialog-button" id="holdingBookNewButton" type="button">+ 新建测算</button>
+      </div>
+      <div class="holding-list" id="holdingList" aria-live="polite"></div>
+      <div class="holding-empty" id="holdingEmpty">
+        <strong>还没有保存的持仓</strong>
+        <span>填写交易参数后点击“保存当前”，这里会生成一张持仓卡片。</span>
+      </div>
+      <p class="privacy-note"><i aria-hidden="true"></i>持仓、方案与费用设置仅保存在当前浏览器，不会上传服务器。</p>
+    </div>
+    <div class="dialog-actions dialog-actions-split">
+      <span id="holdingBookFooter">0 条本地持仓</span>
+      <button class="dialog-primary" type="button" data-close-dialog>完成</button>
+    </div>
+  </dialog>
+
+  <dialog class="app-dialog unsaved-dialog" id="unsavedDialog" aria-labelledby="unsavedDialogTitle">
+    <div class="dialog-header">
+      <div>
+        <p class="panel-kicker">UNSAVED CHANGES</p>
+        <h2 id="unsavedDialogTitle">当前测算尚未保存</h2>
+      </div>
+      <button class="dialog-close" type="button" data-unsaved-action="cancel" aria-label="关闭">×</button>
+    </div>
+    <div class="dialog-body unsaved-dialog-body">
+      <div class="unsaved-icon" aria-hidden="true">!</div>
+      <div>
+        <strong id="unsavedPromptTitle">要先保存这只股票吗？</strong>
+        <p id="unsavedPromptText">保存后可在持仓簿继续测算；不保存则会清空当前参数。</p>
+      </div>
+    </div>
+    <div class="dialog-actions unsaved-dialog-actions">
+      <button class="dialog-secondary" type="button" data-unsaved-action="cancel">取消</button>
+      <button class="dialog-secondary danger-text" id="discardAndContinueButton" type="button" data-unsaved-action="discard">不保存，直接新建</button>
+      <button class="dialog-primary" id="saveAndContinueButton" type="button" data-unsaved-action="save">保存并新建</button>
+    </div>
+  </dialog>
+
   <div class="copy-toast" id="copyToast" role="status" aria-live="polite" hidden>测算结果已复制</div>
 
-  <script src="calculator.js?v=20260727-12"></script>
+  <script src="calculator.js?v=20260727-15"></script>
 </body>
 </html>

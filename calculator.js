@@ -3,6 +3,8 @@
 
   var STORAGE_KEY = "hk-diluted-cost-calculator-v1";
   var SCENARIO_STORAGE_KEY = "hk-diluted-cost-calculator-scenarios-v1";
+  var HOLDINGS_STORAGE_KEY = "hk-diluted-cost-calculator-holdings-v1";
+  var CURRENT_HOLDING_STORAGE_KEY = "hk-diluted-cost-calculator-current-holding-v1";
   var SHARE_FIELDS = {
     currentShares: "cs",
     currentCost: "cc",
@@ -47,6 +49,21 @@
     manualSellFee: 18.5,
     manualBuyFee: 18.5
   };
+  var NEW_MEASUREMENT_VALUES = {
+    currentShares: 0,
+    currentCost: 0,
+    marketPrice: 0,
+    lotSize: 100,
+    sellShares: 0,
+    sellPrice: 0,
+    sellFee: 0,
+    buyShares: 0,
+    buyPrice: 0,
+    buyFee: 0,
+    targetCost: 0,
+    stockCode: "",
+    stockName: ""
+  };
 
   var form = document.getElementById("calculatorForm");
   var resetButton = document.getElementById("resetButton");
@@ -67,6 +84,14 @@
   var scenarioButton = document.getElementById("scenarioButton");
   var sharePlanButton = document.getElementById("sharePlanButton");
   var scenarioDialog = document.getElementById("scenarioDialog");
+  var holdingBookButton = document.getElementById("holdingBookButton");
+  var holdingBookDialog = document.getElementById("holdingBookDialog");
+  var holdingBookNewButton = document.getElementById("holdingBookNewButton");
+  var holdingList = document.getElementById("holdingList");
+  var holdingEmpty = document.getElementById("holdingEmpty");
+  var newMeasurementButton = document.getElementById("newMeasurementButton");
+  var saveHoldingButton = document.getElementById("saveHoldingButton");
+  var unsavedDialog = document.getElementById("unsavedDialog");
   var feeSettings = Object.assign({}, DEFAULT_FEE_SETTINGS);
   var latestTargetPlan = null;
   var latestInput = null;
@@ -75,6 +100,11 @@
   var resetConfirmTimer = null;
   var resetArmed = false;
   var scenarios = { A: null, B: null };
+  var holdingRecords = [];
+  var currentRecordId = null;
+  var savedRecordSignature = null;
+  var pendingUnsavedAction = null;
+  var pendingDeleteId = null;
 
   function element(id) {
     return document.getElementById(id);
@@ -487,11 +517,40 @@
     });
   }
 
-  function renderUnavailable() {
+  function renderUnavailable(isEmptyState) {
     latestTargetPlan = null;
     element("resultInsight").hidden = true;
     element("resultInsight").textContent = "";
-    setText("targetPlanMessage", "请先修正输入内容。") ;
+    setText("calculationBadge", isEmptyState ? "等待输入" : "输入待修正");
+    setText("newDilutedCost", "—");
+    setText("costChange", isEmptyState ? "填写交易参数后生成结果" : "修正参数后重新计算");
+    element("costChange").className = "cost-change cost-neutral";
+    setText("netCashFlow", "—");
+    element("netCashFlow").className = "";
+    ["finalShares", "recoverableCost", "totalPnl", "breakEvenGap"].forEach(function (id) {
+      setText(id, "—");
+      element(id).className = "";
+    });
+    ["originalBasis", "netSaleProceeds", "buyOutlay", "totalFees"].forEach(function (id) {
+      setText(id, "—");
+    });
+    ["beforeStageCost", "beforeStageShares", "afterSellStageCost", "afterSellStageShares", "afterBuyStageCost", "afterBuyStageShares"].forEach(function (id) {
+      setText(id, "—");
+    });
+    setText("positionSummary", "— / —");
+    setText("breakEvenLabel", "回本 —");
+    element("positionFill").style.width = "0%";
+    element("positionDot").style.left = "0%";
+    setText("formulaText", isEmptyState ? "填写参数后生成计算过程。" : "请先修正输入内容。");
+    element("chartGrid").replaceChildren();
+    element("chartLine").setAttribute("d", "");
+    element("chartArea").setAttribute("d", "");
+    element("chartVerticalGuide").setAttribute("visibility", "hidden");
+    element("chartHorizontalGuide").setAttribute("visibility", "hidden");
+    element("chartPoint").setAttribute("visibility", "hidden");
+    element("chartPointCallout").setAttribute("visibility", "hidden");
+    setText("targetPlanBadge", "目标 —");
+    setText("targetPlanMessage", isEmptyState ? "填写左侧参数后开始测算。" : "请先修正输入内容。");
     setText("targetPlanShares", "—");
     setText("targetPlanOutlay", "—");
     setText("targetPlanActualCost", "—");
@@ -515,6 +574,10 @@
     var width = 620;
     var height = 240;
     var padding = { left: 54, right: 18, top: 28, bottom: 34 };
+    element("chartVerticalGuide").removeAttribute("visibility");
+    element("chartHorizontalGuide").removeAttribute("visibility");
+    element("chartPoint").removeAttribute("visibility");
+    element("chartPointCallout").removeAttribute("visibility");
     var plotWidth = width - padding.left - padding.right;
     var plotHeight = height - padding.top - padding.bottom;
     var center = Math.max(1, input.buyPrice);
@@ -1047,26 +1110,143 @@
     } : null;
   }
 
-  function loadScenarios() {
+  function normalizedScenarios(source) {
+    return {
+      A: normalizedScenario(source && source.A),
+      B: normalizedScenario(source && source.B)
+    };
+  }
+
+  function loadLegacyScenarios() {
     try {
       var saved = JSON.parse(localStorage.getItem(SCENARIO_STORAGE_KEY));
-      if (saved && typeof saved === "object") {
-        scenarios.A = normalizedScenario(saved.A);
-        scenarios.B = normalizedScenario(saved.B);
-      }
+      scenarios = normalizedScenarios(saved);
     } catch (error) {
       scenarios = { A: null, B: null };
     }
     updateScenarioCount();
   }
 
-  function saveScenarios() {
+  function normalizeHoldingRecord(source) {
+    if (!source || typeof source !== "object" || !source.id || !source.values) {
+      return null;
+    }
+    var values = {};
+    var valid = true;
+    Object.keys(DEFAULTS).forEach(function (key) {
+      if (!Number.isFinite(Number(source.values[key]))) {
+        valid = false;
+      } else {
+        values[key] = Number(source.values[key]);
+      }
+    });
+    if (!valid) {
+      return null;
+    }
+    values.stockCode = normalizedStockCode(source.values.stockCode);
+    values.stockName = String(source.values.stockName || "").trim();
+    return {
+      id: String(source.id),
+      values: values,
+      feeSettings: normalizedFeeSettings(source.feeSettings),
+      scenarios: normalizedScenarios(source.scenarios),
+      updatedAt: Number(source.updatedAt) || Date.now()
+    };
+  }
+
+  function loadHoldingRecords() {
     try {
-      localStorage.setItem(SCENARIO_STORAGE_KEY, JSON.stringify(scenarios));
+      var saved = JSON.parse(localStorage.getItem(HOLDINGS_STORAGE_KEY));
+      holdingRecords = Array.isArray(saved)
+        ? saved.map(normalizeHoldingRecord).filter(Boolean)
+        : [];
     } catch (error) {
-      // Scenario comparison still works for the current session.
+      holdingRecords = [];
+    }
+    updateHoldingCount();
+  }
+
+  function persistHoldingRecords() {
+    try {
+      localStorage.setItem(HOLDINGS_STORAGE_KEY, JSON.stringify(holdingRecords));
+      if (currentRecordId) {
+        localStorage.setItem(CURRENT_HOLDING_STORAGE_KEY, currentRecordId);
+      } else {
+        localStorage.removeItem(CURRENT_HOLDING_STORAGE_KEY);
+      }
+    } catch (error) {
+      // The current calculation remains usable if browser storage is unavailable.
+    }
+    updateHoldingCount();
+  }
+
+  function findHoldingRecord(id) {
+    return holdingRecords.find(function (record) { return record.id === id; }) || null;
+  }
+
+  function holdingStateSignature(values, settings, scenarioState) {
+    return JSON.stringify({
+      values: values,
+      feeSettings: normalizedFeeSettings(settings),
+      scenarios: normalizedScenarios(scenarioState)
+    });
+  }
+
+  function currentStateSignature() {
+    return holdingStateSignature(captureFormValues(), feeSettings, scenarios);
+  }
+
+  function hasMeaningfulCurrentState() {
+    var values = captureFormValues();
+    if (values.stockCode || values.stockName) {
+      return true;
+    }
+    return ["currentShares", "currentCost", "marketPrice", "sellShares", "sellPrice", "buyShares", "buyPrice", "targetCost"]
+      .some(function (key) { return Math.abs(Number(values[key]) || 0) > 0.000001; })
+      || Boolean(scenarios.A || scenarios.B);
+  }
+
+  function isCurrentDirty() {
+    if (currentRecordId && savedRecordSignature) {
+      return currentStateSignature() !== savedRecordSignature;
+    }
+    return hasMeaningfulCurrentState();
+  }
+
+  function updateHoldingCount() {
+    setText("holdingCount", String(holdingRecords.length));
+    setText("holdingBookFooter", holdingRecords.length + " 条本地持仓");
+  }
+
+  function updateSavedStateUI() {
+    var dirty = isCurrentDirty();
+    saveHoldingButton.classList.toggle("is-saved", Boolean(currentRecordId && !dirty));
+    saveHoldingButton.classList.toggle("is-dirty", Boolean(currentRecordId && dirty));
+    if (currentRecordId && !dirty) {
+      setText("saveHoldingLabel", "已保存 ✓");
+    } else if (currentRecordId) {
+      setText("saveHoldingLabel", "有修改 · 保存");
+    } else {
+      setText("saveHoldingLabel", "保存当前");
+    }
+  }
+
+  function saveScenarios() {
+    var record = findHoldingRecord(currentRecordId);
+    if (record) {
+      record.scenarios = normalizedScenarios(scenarios);
+      record.updatedAt = Date.now();
+      savedRecordSignature = holdingStateSignature(record.values, record.feeSettings, record.scenarios);
+      persistHoldingRecords();
+    } else {
+      try {
+        localStorage.setItem(SCENARIO_STORAGE_KEY, JSON.stringify(scenarios));
+      } catch (error) {
+        // Scenario comparison still works for the current session.
+      }
     }
     updateScenarioCount();
+    updateSavedStateUI();
   }
 
   function updateScenarioCount() {
@@ -1156,6 +1336,203 @@
       scenarios[slot] = null;
       saveScenarios();
       renderScenarioDialog();
+    }
+  }
+
+  function createHoldingId() {
+    return "holding-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
+  }
+
+  function saveCurrentHolding() {
+    if (!latestInput || !latestResult) {
+      showCopyToast("请先修正输入内容", true);
+      return false;
+    }
+    if (!latestInput.stockCode && !latestInput.stockName) {
+      showCopyToast("请先填写股票代码或名称", true);
+      element("stockCode").focus();
+      return false;
+    }
+    var record = findHoldingRecord(currentRecordId);
+    if (!record) {
+      record = { id: createHoldingId() };
+      currentRecordId = record.id;
+      holdingRecords.push(record);
+    }
+    record.values = captureFormValues();
+    record.feeSettings = normalizedFeeSettings(feeSettings);
+    record.scenarios = normalizedScenarios(scenarios);
+    record.updatedAt = Date.now();
+    holdingRecords.sort(function (a, b) { return b.updatedAt - a.updatedAt; });
+    savedRecordSignature = holdingStateSignature(record.values, record.feeSettings, record.scenarios);
+    persistHoldingRecords();
+    try {
+      localStorage.removeItem(SCENARIO_STORAGE_KEY);
+    } catch (error) {
+      // Ignore unavailable storage cleanup.
+    }
+    updateSavedStateUI();
+    renderHoldingBook();
+    showCopyToast("已保存到持仓簿", false);
+    return true;
+  }
+
+  function holdingCalculation(record) {
+    var input = inputFromState(record.values, record.feeSettings);
+    var result = calculateCosts(input);
+    return result.error ? null : { input: input, result: result };
+  }
+
+  function formatHoldingTime(timestamp) {
+    var date = new Date(timestamp);
+    function pad(value) { return String(value).padStart(2, "0"); }
+    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate())
+      + " " + pad(date.getHours()) + ":" + pad(date.getMinutes());
+  }
+
+  function renderHoldingBook() {
+    holdingList.replaceChildren();
+    holdingEmpty.hidden = holdingRecords.length > 0;
+    holdingRecords.forEach(function (record) {
+      var calculation = holdingCalculation(record);
+      var card = document.createElement("article");
+      var isCurrent = record.id === currentRecordId;
+      card.className = "holding-card" + (isCurrent ? " is-current" : "");
+      card.dataset.recordId = record.id;
+      card.innerHTML = ""
+        + '<div class="holding-card-header">'
+        + '  <div class="holding-card-title"><strong data-field="code"></strong><span data-field="name"></span></div>'
+        + '  <span class="holding-card-status" data-field="status"></span>'
+        + '</div>'
+        + '<div class="holding-card-metrics">'
+        + '  <div><span>目前持仓</span><strong data-field="shares"></strong></div>'
+        + '  <div><span>目前成本</span><strong data-field="cost"></strong></div>'
+        + '  <div><span>当前股价</span><strong data-field="price"></strong></div>'
+        + '  <div><span>资金回本成本</span><strong data-field="basis"></strong></div>'
+        + '</div>'
+        + '<div class="holding-card-footer">'
+        + '  <time data-field="time"></time>'
+        + '  <div class="holding-card-actions">'
+        + '    <button type="button" data-holding-action="load">继续测算</button>'
+        + '    <button class="holding-delete-button" type="button" data-holding-action="delete">删除</button>'
+        + '  </div>'
+        + '</div>';
+      card.querySelector('[data-field="code"]').textContent = record.values.stockCode || "未填写代码";
+      card.querySelector('[data-field="name"]').textContent = record.values.stockName || "未命名持仓";
+      card.querySelector('[data-field="status"]').textContent = isCurrent
+        ? (isCurrentDirty() ? "正在编辑 · 有修改" : "正在编辑")
+        : "已保存";
+      card.querySelector('[data-field="shares"]').textContent = formatNumber(record.values.currentShares, 0) + " 股";
+      card.querySelector('[data-field="cost"]').textContent = formatMoney(record.values.currentCost);
+      card.querySelector('[data-field="price"]').textContent = formatMoney(record.values.marketPrice);
+      card.querySelector('[data-field="basis"]').textContent = calculation
+        ? formatMoney(calculation.result.newDilutedCost)
+        : "—";
+      card.querySelector('[data-field="time"]').textContent = formatHoldingTime(record.updatedAt) + " 更新";
+      if (pendingDeleteId === record.id) {
+        var deleteButton = card.querySelector('[data-holding-action="delete"]');
+        deleteButton.textContent = "确认删除";
+        deleteButton.classList.add("is-confirming");
+      }
+      holdingList.appendChild(card);
+    });
+    updateHoldingCount();
+  }
+
+  function loadHoldingRecord(recordId) {
+    var record = findHoldingRecord(recordId);
+    if (!record) {
+      return;
+    }
+    currentRecordId = record.id;
+    scenarios = normalizedScenarios(record.scenarios);
+    savedRecordSignature = holdingStateSignature(record.values, record.feeSettings, record.scenarios);
+    pendingDeleteId = null;
+    persistHoldingRecords();
+    setCalculatorState(record.values, record.feeSettings, true);
+    updateScenarioCount();
+    updateSavedStateUI();
+    closeDialog(holdingBookDialog);
+    showCopyToast("已载入 " + (stockLabel(record.values) || "该持仓"), false);
+  }
+
+  function deleteHoldingRecord(recordId) {
+    holdingRecords = holdingRecords.filter(function (record) { return record.id !== recordId; });
+    if (currentRecordId === recordId) {
+      currentRecordId = null;
+      savedRecordSignature = null;
+    }
+    pendingDeleteId = null;
+    persistHoldingRecords();
+    updateSavedStateUI();
+    renderHoldingBook();
+    showCopyToast("持仓记录已删除", false);
+  }
+
+  function startNewMeasurement() {
+    var nextFeeSettings = normalizedFeeSettings(feeSettings);
+    nextFeeSettings.manualSellFee = 0;
+    nextFeeSettings.manualBuyFee = 0;
+    currentRecordId = null;
+    savedRecordSignature = null;
+    pendingDeleteId = null;
+    scenarios = { A: null, B: null };
+    persistHoldingRecords();
+    setCalculatorState(NEW_MEASUREMENT_VALUES, nextFeeSettings, true);
+    updateScenarioCount();
+    updateSavedStateUI();
+    closeDialog(holdingBookDialog);
+    closeDialog(unsavedDialog);
+    element("stockCode").focus();
+    showCopyToast("已新建空白测算", false);
+  }
+
+  function performPendingUnsavedAction() {
+    var action = pendingUnsavedAction;
+    pendingUnsavedAction = null;
+    if (!action || action.type === "new") {
+      startNewMeasurement();
+    } else if (action.type === "load") {
+      loadHoldingRecord(action.recordId);
+    }
+  }
+
+  function requestMeasurementAction(action) {
+    if (action.type === "load" && action.recordId === currentRecordId) {
+      closeDialog(holdingBookDialog);
+      return;
+    }
+    if (!isCurrentDirty()) {
+      pendingUnsavedAction = action;
+      performPendingUnsavedAction();
+      return;
+    }
+    pendingUnsavedAction = action;
+    var isNew = action.type === "new";
+    setText("unsavedPromptTitle", isNew ? "要先保存这只股票吗？" : "切换持仓前，要保存当前修改吗？");
+    setText("unsavedPromptText", isNew
+      ? "保存后可在持仓簿继续测算；不保存则会清空当前参数。"
+      : "保存后再切换到所选持仓；不保存将放弃当前修改。");
+    setText("discardAndContinueButton", isNew ? "不保存，直接新建" : "不保存，直接切换");
+    setText("saveAndContinueButton", isNew ? "保存并新建" : "保存并切换");
+    openDialog(unsavedDialog);
+  }
+
+  function restoreCurrentHoldingLink() {
+    try {
+      var savedId = localStorage.getItem(CURRENT_HOLDING_STORAGE_KEY);
+      var record = findHoldingRecord(savedId);
+      if (!record) {
+        loadLegacyScenarios();
+        return;
+      }
+      currentRecordId = record.id;
+      scenarios = normalizedScenarios(record.scenarios);
+      savedRecordSignature = holdingStateSignature(record.values, record.feeSettings, record.scenarios);
+    } catch (error) {
+      currentRecordId = null;
+      savedRecordSignature = null;
+      loadLegacyScenarios();
     }
   }
 
@@ -1249,11 +1626,18 @@
     updateRangeVisual(buyRange);
 
     if (result.error) {
+      var isEmptyState = !hasMeaningfulCurrentState();
       latestInput = null;
       latestResult = null;
       copyResultButton.disabled = true;
-      showError(result.error);
-      renderUnavailable();
+      if (isEmptyState) {
+        hideError();
+      } else {
+        showError(result.error);
+      }
+      renderUnavailable(isEmptyState);
+      saveInputs(input);
+      updateSavedStateUI();
       return;
     }
     hideError();
@@ -1311,6 +1695,7 @@
       refreshFeeDialog();
     }
     saveInputs(input);
+    updateSavedStateUI();
   }
 
   sellRange.addEventListener("input", function () {
@@ -1385,6 +1770,61 @@
     refreshFeeDialog();
   });
   element("applyFeeSettings").addEventListener("click", applyFeeSettingsFromDialog);
+  saveHoldingButton.addEventListener("click", saveCurrentHolding);
+  holdingBookButton.addEventListener("click", function () {
+    pendingDeleteId = null;
+    renderHoldingBook();
+    openDialog(holdingBookDialog);
+  });
+  newMeasurementButton.addEventListener("click", function () {
+    requestMeasurementAction({ type: "new" });
+  });
+  holdingBookNewButton.addEventListener("click", function () {
+    requestMeasurementAction({ type: "new" });
+  });
+  holdingList.addEventListener("click", function (event) {
+    var actionButton = event.target.closest("button[data-holding-action]");
+    var card = event.target.closest("[data-record-id]");
+    if (!actionButton || !card) {
+      return;
+    }
+    var recordId = card.dataset.recordId;
+    if (actionButton.dataset.holdingAction === "load") {
+      pendingDeleteId = null;
+      requestMeasurementAction({ type: "load", recordId: recordId });
+    } else if (actionButton.dataset.holdingAction === "delete") {
+      if (pendingDeleteId === recordId) {
+        deleteHoldingRecord(recordId);
+      } else {
+        pendingDeleteId = recordId;
+        renderHoldingBook();
+      }
+    }
+  });
+  unsavedDialog.addEventListener("cancel", function () {
+    pendingUnsavedAction = null;
+  });
+  unsavedDialog.addEventListener("click", function (event) {
+    var actionButton = event.target.closest("button[data-unsaved-action]");
+    if (!actionButton) {
+      if (event.target === unsavedDialog) {
+        pendingUnsavedAction = null;
+        closeDialog(unsavedDialog);
+      }
+      return;
+    }
+    var action = actionButton.dataset.unsavedAction;
+    if (action === "cancel") {
+      pendingUnsavedAction = null;
+      closeDialog(unsavedDialog);
+    } else if (action === "discard") {
+      closeDialog(unsavedDialog);
+      performPendingUnsavedAction();
+    } else if (action === "save" && saveCurrentHolding()) {
+      closeDialog(unsavedDialog);
+      performPendingUnsavedAction();
+    }
+  });
   copyResultButton.addEventListener("click", copyCurrentResult);
   sharePlanButton.addEventListener("click", shareCurrentPlan);
   scenarioButton.addEventListener("click", function () {
@@ -1406,6 +1846,12 @@
     if (resetArmed && !event.target.closest("#resetButton")) {
       cancelResetConfirmation();
     }
+    if (pendingDeleteId && !event.target.closest("[data-holding-action=\"delete\"]")) {
+      pendingDeleteId = null;
+      if (holdingBookDialog.open || holdingBookDialog.hasAttribute("open")) {
+        renderHoldingBook();
+      }
+    }
   });
 
   document.querySelectorAll("[data-close-dialog]").forEach(function (button) {
@@ -1413,7 +1859,7 @@
       closeDialog(button.closest("dialog"));
     });
   });
-  [basisDialog, feeDialog, scenarioDialog].forEach(function (dialog) {
+  [basisDialog, feeDialog, scenarioDialog, holdingBookDialog].forEach(function (dialog) {
     dialog.addEventListener("click", function (event) {
       if (event.target === dialog) {
         closeDialog(dialog);
@@ -1421,14 +1867,23 @@
     });
   });
 
-  loadScenarios();
+  loadHoldingRecords();
   var loadedSharedState = loadSharedState();
-  if (!loadedSharedState) {
+  if (loadedSharedState) {
+    currentRecordId = null;
+    savedRecordSignature = null;
+    scenarios = { A: null, B: null };
+    persistHoldingRecords();
+  } else {
     loadInputs();
+    restoreCurrentHoldingLink();
   }
   syncRangeFromNumber(sellRange, sellPriceInput);
   syncRangeFromNumber(buyRange, buyPriceInput);
   update();
+  updateScenarioCount();
+  updateHoldingCount();
+  updateSavedStateUI();
   if (loadedSharedState) {
     showCopyToast("已载入分享方案", false);
   }
