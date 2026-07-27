@@ -1059,7 +1059,7 @@ input[type="range"]::-webkit-slider-thumb {
   stroke-linejoin: round;
 }
 
-/* Friendly visual identity for 港股成本小算盘. */
+/* Friendly visual identity for 小算盘 / costbuddy. */
 :root {
   --bg: #f5f6fb;
   --canvas: #fffefe;

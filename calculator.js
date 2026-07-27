@@ -641,7 +641,7 @@
 
   function updateDocumentTitle(input) {
     var label = stockLabel(input);
-    document.title = label ? label + " · 港股成本小算盘" : "港股成本小算盘";
+    document.title = label ? label + " · 小算盘 · costbuddy" : "小算盘 · costbuddy";
   }
 
   function updateResultInsight(input, result) {
@@ -805,7 +805,7 @@
       : (result.netCashFlow > 0
         ? "净收回 " + formatMoney(result.netCashFlow)
         : "净投入 " + formatMoney(Math.abs(result.netCashFlow)));
-    var lines = ["港股成本小算盘"];
+    var lines = ["小算盘 · costbuddy"];
     if (stockLabel(input)) {
       lines.push("证券：" + stockLabel(input));
     }
