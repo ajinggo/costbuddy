@@ -1194,3 +1194,272 @@ input[type="range"]::-webkit-slider-thumb {
   .stock-identity-grid { margin-bottom: 4px; }
   .result-insight { margin-top: 3px; font-size: 7.5px; }
 }
+
+/* Transaction ticket spacing pass: clearer hierarchy without colored module fills. */
+.dashboard {
+  grid-template-columns: clamp(308px, 26vw, 332px) minmax(0, 1fr);
+}
+
+.controls {
+  grid-template-rows: 34px minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  padding: 9px 10px;
+}
+
+.controls-header {
+  padding-inline: 2px;
+}
+
+.controls-header h2 {
+  font-size: 13px;
+  letter-spacing: -.02em;
+}
+
+.controls-header-tools {
+  gap: 6px;
+}
+
+.fee-mode-button,
+.live-chip {
+  height: 22px;
+}
+
+.control-section {
+  padding: 9px 11px 10px;
+  border-radius: 11px;
+}
+
+.control-section::after {
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+}
+
+.control-section legend {
+  min-height: 31px;
+  padding-bottom: 7px;
+}
+
+.legend-heading {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 8px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 7px;
+  row-gap: 1px;
+  align-items: center;
+}
+
+.legend-heading::before {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  margin: 0;
+}
+
+.legend-heading > span,
+.legend-heading small {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.legend-heading > span {
+  grid-row: 1;
+  font-size: 10.5px;
+  line-height: 1.15;
+}
+
+.legend-heading small {
+  grid-row: 2;
+  overflow: hidden;
+  color: var(--faint);
+  font-size: 7.8px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legend-note,
+.legend-value {
+  flex: 0 0 auto;
+}
+
+.legend-note {
+  padding: 4px 6px;
+  font-size: 7.2px;
+}
+
+.legend-value {
+  min-width: 55px;
+  padding: 4px 7px;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.field,
+.stock-identity-grid .field {
+  gap: 4px;
+}
+
+.field > span:first-child,
+.field-title,
+.slider-heading label,
+.target-inline-field > span:first-child {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.15;
+}
+
+.input-wrap {
+  height: 31px;
+  border-radius: 8px;
+}
+
+.input-wrap input {
+  height: 29px;
+  padding-inline: 8px 5px;
+  font-size: 11.5px;
+}
+
+.input-wrap small {
+  min-width: 28px;
+  padding-right: 7px;
+  color: var(--faint);
+  font-size: 7.5px;
+}
+
+.stock-identity-grid {
+  grid-template-columns: 98px minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.stock-identity-grid .input-wrap {
+  height: 30px;
+}
+
+.stock-identity-grid .input-wrap input {
+  height: 28px;
+  padding-inline: 8px;
+  font-size: 10.5px;
+  text-align: left;
+}
+
+.stock-name-field > span:first-child b {
+  font-size: 7px;
+}
+
+.primary-market-field {
+  margin-bottom: 7px;
+}
+
+.primary-market-field .input-wrap {
+  height: 39px;
+}
+
+.primary-market-field .input-wrap input {
+  height: 37px;
+  font-size: 17px;
+}
+
+.primary-market-field .input-wrap::before,
+.price-input::before {
+  font-size: 8px;
+}
+
+.basis-field-grid {
+  grid-template-columns: 1fr 1.08fr .86fr;
+  gap: 7px;
+}
+
+.compact-field .input-wrap input {
+  padding-left: 6px;
+  font-size: 10.5px;
+}
+
+.compact-field .input-wrap small {
+  min-width: 20px;
+  padding-right: 6px;
+}
+
+.slider-field {
+  grid-template-columns: minmax(0, 1fr) 106px;
+  gap: 4px 8px;
+  margin-bottom: 7px;
+}
+
+.slider-heading::before {
+  width: 18px;
+  margin-right: 6px;
+}
+
+.price-input {
+  height: 31px;
+}
+
+.price-input input {
+  height: 29px;
+  padding-right: 8px;
+  font-size: 12px;
+}
+
+input[type="range"] {
+  height: 14px;
+  margin-top: 2px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  width: 13px;
+  height: 13px;
+  margin-top: -4.5px;
+}
+
+.range-scale {
+  margin-top: -1px;
+  font-size: 7.5px;
+}
+
+.order-field-grid {
+  grid-template-columns: .9fr 1.1fr;
+  gap: 7px;
+}
+
+@media (max-height: 760px) {
+  .controls {
+    grid-template-rows: 34px minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 7px;
+    padding: 8px 9px;
+  }
+
+  .control-section {
+    padding: 8px 10px 9px;
+  }
+
+  .control-section legend {
+    min-height: 29px;
+    padding-bottom: 6px;
+  }
+
+  .stock-identity-grid {
+    margin-bottom: 5px;
+  }
+
+  .primary-market-field {
+    margin-bottom: 6px;
+  }
+
+  .slider-field {
+    margin-bottom: 6px;
+  }
+}
+
+.control-section legend .legend-heading {
+  flex: 1 1 auto;
+  margin-right: 10px;
+}
