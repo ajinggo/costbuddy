@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="小算盘">
   <title>小算盘 · costbuddy</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260727-19">
+  <link rel="stylesheet" href="styles.css?v=20260727-20">
 </head>
 <body>
   <main class="app-shell">
@@ -559,8 +559,16 @@
     </div>
     <div class="dialog-body holding-book-dialog-body">
       <div class="holding-book-summary">
-        <p>保存不同股票的测算进度，之后可以从原来的数据继续。</p>
-        <button class="dialog-secondary compact-dialog-button" id="holdingBookNewButton" type="button">+ 新建测算</button>
+        <div class="holding-book-summary-copy">
+          <p>保存不同股票的测算进度，之后可以从原来的数据继续。</p>
+          <small>换电脑时，先导出备份，再在新设备导入。</small>
+        </div>
+        <div class="holding-book-summary-actions">
+          <button class="dialog-secondary compact-dialog-button" id="exportBackupButton" type="button">导出备份</button>
+          <button class="dialog-secondary compact-dialog-button" id="importBackupButton" type="button">导入备份</button>
+          <button class="dialog-secondary compact-dialog-button" id="holdingBookNewButton" type="button">+ 新建测算</button>
+          <input id="backupFileInput" type="file" accept=".json,application/json" hidden>
+        </div>
       </div>
       <div class="holding-list" id="holdingList" aria-live="polite"></div>
       <div class="holding-empty" id="holdingEmpty">
@@ -572,6 +580,27 @@
     <div class="dialog-actions dialog-actions-split">
       <span id="holdingBookFooter">0 条本地持仓</span>
       <button class="dialog-primary" type="button" data-close-dialog>完成</button>
+    </div>
+  </dialog>
+
+  <dialog class="app-dialog import-backup-dialog" id="importBackupDialog" aria-labelledby="importBackupDialogTitle">
+    <div class="dialog-header">
+      <div>
+        <p class="panel-kicker">DATA TRANSFER</p>
+        <h2 id="importBackupDialogTitle">确认导入备份</h2>
+      </div>
+      <button class="dialog-close" type="button" data-import-action="cancel" aria-label="关闭">×</button>
+    </div>
+    <div class="dialog-body import-backup-dialog-body">
+      <div class="import-backup-icon" aria-hidden="true">⇄</div>
+      <div class="import-backup-copy">
+        <strong id="importBackupSummary">已读取 costbuddy 备份</strong>
+        <p>导入会替换此浏览器中的持仓簿、当前测算、方案和费用设置。建议先导出现在的数据作为备份。</p>
+      </div>
+    </div>
+    <div class="dialog-actions import-backup-dialog-actions">
+      <button class="dialog-secondary" type="button" data-import-action="cancel">取消</button>
+      <button class="dialog-primary" id="confirmImportBackupButton" type="button" data-import-action="confirm">确认导入并替换</button>
     </div>
   </dialog>
 
@@ -599,6 +628,6 @@
 
   <div class="copy-toast" id="copyToast" role="status" aria-live="polite" hidden>测算结果已复制</div>
 
-  <script src="calculator.js?v=20260727-15"></script>
+  <script src="calculator.js?v=20260727-16"></script>
 </body>
 </html>

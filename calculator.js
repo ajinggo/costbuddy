@@ -5,6 +5,9 @@
   var SCENARIO_STORAGE_KEY = "hk-diluted-cost-calculator-scenarios-v1";
   var HOLDINGS_STORAGE_KEY = "hk-diluted-cost-calculator-holdings-v1";
   var CURRENT_HOLDING_STORAGE_KEY = "hk-diluted-cost-calculator-current-holding-v1";
+  var BACKUP_FORMAT = "costbuddy-backup";
+  var BACKUP_VERSION = 1;
+  var MAX_BACKUP_FILE_SIZE = 2 * 1024 * 1024;
   var SHARE_FIELDS = {
     currentShares: "cs",
     currentCost: "cc",
@@ -92,6 +95,10 @@
   var newMeasurementButton = document.getElementById("newMeasurementButton");
   var saveHoldingButton = document.getElementById("saveHoldingButton");
   var unsavedDialog = document.getElementById("unsavedDialog");
+  var exportBackupButton = document.getElementById("exportBackupButton");
+  var importBackupButton = document.getElementById("importBackupButton");
+  var backupFileInput = document.getElementById("backupFileInput");
+  var importBackupDialog = document.getElementById("importBackupDialog");
   var feeSettings = Object.assign({}, DEFAULT_FEE_SETTINGS);
   var latestTargetPlan = null;
   var latestInput = null;
@@ -105,6 +112,7 @@
   var savedRecordSignature = null;
   var pendingUnsavedAction = null;
   var pendingDeleteId = null;
+  var pendingImportBackup = null;
 
   function element(id) {
     return document.getElementById(id);
@@ -1339,6 +1347,135 @@
     }
   }
 
+  function backupPayload() {
+    return {
+      format: BACKUP_FORMAT,
+      version: BACKUP_VERSION,
+      product: "costbuddy",
+      exportedAt: new Date().toISOString(),
+      data: {
+        current: {
+          values: captureFormValues(),
+          feeSettings: normalizedFeeSettings(feeSettings),
+          scenarios: normalizedScenarios(scenarios),
+          recordId: currentRecordId
+        },
+        holdings: holdingRecords
+      }
+    };
+  }
+
+  function backupFileName() {
+    var date = new Date();
+    function pad(value) { return String(value).padStart(2, "0"); }
+    return "costbuddy-backup-" + date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + ".json";
+  }
+
+  function exportBackup() {
+    try {
+      var content = JSON.stringify(backupPayload(), null, 2);
+      var url = URL.createObjectURL(new Blob([content], { type: "application/json;charset=utf-8" }));
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = backupFileName();
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      showCopyToast("备份已导出", false);
+    } catch (error) {
+      showCopyToast("备份导出失败，请稍后重试", true);
+    }
+  }
+
+  function normalizeBackupPayload(source) {
+    if (!source || typeof source !== "object" || source.format !== BACKUP_FORMAT
+        || Number(source.version) !== BACKUP_VERSION || !source.data || typeof source.data !== "object") {
+      throw new Error("unsupported-backup");
+    }
+    var currentSource = source.data.current;
+    var normalizedCurrent = normalizeHoldingRecord({
+      id: "backup-current",
+      values: currentSource && currentSource.values,
+      feeSettings: currentSource && currentSource.feeSettings,
+      scenarios: currentSource && currentSource.scenarios,
+      updatedAt: Date.now()
+    });
+    if (!normalizedCurrent) {
+      throw new Error("invalid-current-state");
+    }
+    var rawHoldings = Array.isArray(source.data.holdings) ? source.data.holdings : [];
+    var normalizedHoldings = rawHoldings.map(normalizeHoldingRecord).filter(Boolean);
+    var uniqueIds = new Set(normalizedHoldings.map(function (record) { return record.id; }));
+    if (normalizedHoldings.length !== rawHoldings.length || uniqueIds.size !== normalizedHoldings.length) {
+      throw new Error("invalid-holdings");
+    }
+    normalizedHoldings.sort(function (a, b) { return b.updatedAt - a.updatedAt; });
+    var requestedRecordId = currentSource && currentSource.recordId ? String(currentSource.recordId) : null;
+    var linkedRecordId = requestedRecordId && uniqueIds.has(requestedRecordId) ? requestedRecordId : null;
+    return {
+      exportedAt: Number.isFinite(Date.parse(source.exportedAt)) ? Date.parse(source.exportedAt) : 0,
+      holdings: normalizedHoldings,
+      current: {
+        values: normalizedCurrent.values,
+        feeSettings: normalizedCurrent.feeSettings,
+        scenarios: normalizedCurrent.scenarios,
+        recordId: linkedRecordId
+      }
+    };
+  }
+
+  function previewBackupImport(backup) {
+    pendingImportBackup = backup;
+    var timeText = backup.exportedAt ? formatHoldingTime(backup.exportedAt) + " 导出" : "未记录导出时间";
+    setText("importBackupSummary", "备份包含 " + backup.holdings.length + " 条持仓 · " + timeText);
+    openDialog(importBackupDialog);
+  }
+
+  function readBackupFile(file) {
+    if (!file) {
+      return;
+    }
+    if (file.size > MAX_BACKUP_FILE_SIZE) {
+      showCopyToast("备份文件过大，无法导入", true);
+      return;
+    }
+    file.text().then(function (content) {
+      previewBackupImport(normalizeBackupPayload(JSON.parse(content)));
+    }).catch(function () {
+      pendingImportBackup = null;
+      showCopyToast("无法读取备份，请选择 costbuddy 导出的 JSON 文件", true);
+    });
+  }
+
+  function applyImportedBackup() {
+    if (!pendingImportBackup) {
+      return;
+    }
+    var backup = pendingImportBackup;
+    pendingImportBackup = null;
+    holdingRecords = backup.holdings.slice();
+    currentRecordId = backup.current.recordId;
+    scenarios = normalizedScenarios(backup.current.scenarios);
+    var linkedRecord = findHoldingRecord(currentRecordId);
+    savedRecordSignature = linkedRecord
+      ? holdingStateSignature(linkedRecord.values, linkedRecord.feeSettings, linkedRecord.scenarios)
+      : null;
+    pendingDeleteId = null;
+    persistHoldingRecords();
+    try {
+      localStorage.removeItem(SCENARIO_STORAGE_KEY);
+    } catch (error) {
+      // Ignore unavailable legacy-storage cleanup.
+    }
+    setCalculatorState(backup.current.values, backup.current.feeSettings, true);
+    updateScenarioCount();
+    updateSavedStateUI();
+    renderHoldingBook();
+    closeDialog(importBackupDialog);
+    showCopyToast("已导入 " + holdingRecords.length + " 条持仓", false);
+  }
+
   function createHoldingId() {
     return "holding-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
   }
@@ -1781,6 +1918,34 @@
   });
   holdingBookNewButton.addEventListener("click", function () {
     requestMeasurementAction({ type: "new" });
+  });
+  exportBackupButton.addEventListener("click", exportBackup);
+  importBackupButton.addEventListener("click", function () {
+    backupFileInput.click();
+  });
+  backupFileInput.addEventListener("change", function () {
+    var file = backupFileInput.files && backupFileInput.files[0];
+    backupFileInput.value = "";
+    readBackupFile(file);
+  });
+  importBackupDialog.addEventListener("cancel", function () {
+    pendingImportBackup = null;
+  });
+  importBackupDialog.addEventListener("click", function (event) {
+    var actionButton = event.target.closest("button[data-import-action]");
+    if (!actionButton) {
+      if (event.target === importBackupDialog) {
+        pendingImportBackup = null;
+        closeDialog(importBackupDialog);
+      }
+      return;
+    }
+    if (actionButton.dataset.importAction === "confirm") {
+      applyImportedBackup();
+    } else {
+      pendingImportBackup = null;
+      closeDialog(importBackupDialog);
+    }
   });
   holdingList.addEventListener("click", function (event) {
     var actionButton = event.target.closest("button[data-holding-action]");

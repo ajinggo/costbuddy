@@ -1881,3 +1881,77 @@ input[type="range"]::-webkit-slider-thumb {
     display: none;
   }
 }
+
+/* Local backup controls keep browser-only data portable between devices. */
+.holding-book-summary-copy {
+  min-width: 0;
+}
+
+.holding-book-summary-copy small {
+  display: block;
+  margin-top: 3px;
+  color: var(--faint);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.holding-book-summary-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.import-backup-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.import-backup-dialog-body {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.import-backup-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  color: var(--blue);
+  border: 1px solid #b2ccff;
+  border-radius: 50%;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.import-backup-copy strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.import-backup-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.import-backup-dialog-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .holding-book-summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .holding-book-summary-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
