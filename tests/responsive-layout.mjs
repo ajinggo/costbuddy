@@ -10,13 +10,15 @@ const artifactDir = join(root, "test-artifacts", "responsive");
 const compactOnly = process.argv.includes("--compact");
 const viewports = compactOnly
   ? [
-      { name: "1024x768", width: 1024, height: 768 },
-      { name: "1093x700", width: 1093, height: 700 }
+      { name: "1093x700", width: 1093, height: 700 },
+      { name: "1200x800", width: 1200, height: 800 },
+      { name: "1280x720", width: 1280, height: 720 }
     ]
   : [
       { name: "900x768", width: 900, height: 768 },
       { name: "1024x768", width: 1024, height: 768 },
       { name: "1093x700", width: 1093, height: 700 },
+      { name: "1200x800", width: 1200, height: 800 },
       { name: "1280x720", width: 1280, height: 720 },
       { name: "1366x768", width: 1366, height: 768 },
       { name: "1440x900", width: 1440, height: 900 },
@@ -88,6 +90,7 @@ async function readLayout(page) {
       html: measure("html"),
       body: measure("body"),
       dashboard: measure(".dashboard"),
+      sidebar: measure(".sidebar-column"),
       header: measure(".app-header"),
       headerActions: measure(".header-actions"),
       ticketHeader: measure(".controls-header"),
@@ -96,13 +99,41 @@ async function readLayout(page) {
       saveLabel: measure("#saveHoldingLabel"),
       clearLabel: measure("#clearPlanButton > span"),
       mobileSwitcher: measure(".mobile-page-switcher"),
-      dashboardColumns: getComputedStyle(document.querySelector(".dashboard")).gridTemplateColumns
+      results: measure(".results"),
+      resultMain: measure(".result-main-column"),
+      resultSide: measure(".result-side-column"),
+      comparisonTable: measure(".comparison-table"),
+      sideModuleOrder: Array.from(document.querySelectorAll(".result-side-column > section"))
+        .map((section) => ["price-position", "target-plan", "comparison-section", "breakdown"].find((className) => section.classList.contains(className)))
+        .filter(Boolean),
+      numericStyles: [
+        "#newDilutedCost",
+        "#netCashFlow",
+        "#recoverableCost",
+        "#totalPnl",
+        "#positionSummary",
+        ".comparison-table tbody td:nth-child(2)"
+      ].map((selector) => getComputedStyle(document.querySelector(selector)).fontVariantNumeric),
+      dashboardColumns: getComputedStyle(document.querySelector(".dashboard")).gridTemplateColumns,
+      resultColumns: getComputedStyle(document.querySelector(".results")).gridTemplateColumns
     };
   });
 }
 
 function isVisible(box) {
   return box && box.display !== "none" && box.visibility !== "hidden" && box.width > 0 && box.height > 0;
+}
+
+function renderedTrackCount(value) {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function assertSideModuleOrder(layout, viewportName) {
+  assert.deepEqual(
+    layout.sideModuleOrder,
+    ["price-position", "target-plan", "comparison-section", "breakdown"],
+    `${viewportName}: right-column modules must follow position, target, matrix, ledger order`
+  );
 }
 
 function assertContained(inner, outer, message) {
@@ -117,32 +148,55 @@ function assertLayout(layout, viewport, options = {}) {
     `${viewport.name}: dashboard has horizontal overflow (${layout.dashboard.scrollWidth} > ${layout.dashboard.clientWidth})`
   );
   assertContained(layout.headerActions, layout.header, `${viewport.name}: global header actions`);
+  assertSideModuleOrder(layout, viewport.name);
 
-  if (viewport.width < 1000) {
-    assert(isVisible(layout.mobileSwitcher), `${viewport.name}: narrow window must expose the page switcher`);
-    assert(!layout.dashboardColumns.trim().includes(" "), `${viewport.name}: narrow window must use one dashboard column`);
+  if (viewport.width < 1200) {
+    assert(isVisible(layout.mobileSwitcher), `${viewport.name}: compact window must expose the page switcher`);
+    assert.equal(renderedTrackCount(layout.dashboardColumns), 1, `${viewport.name}: compact window must use one dashboard track`);
+    if (checkLowHeight && viewport.height <= 700) {
+      assert.notEqual(layout.body.overflowY, "hidden", `${viewport.name}: low-height compact window must allow vertical scrolling`);
+    }
     return;
   }
 
-  assert(!isVisible(layout.mobileSwitcher), `${viewport.name}: desktop must not expose the mobile page switcher`);
+  assert(!isVisible(layout.mobileSwitcher), `${viewport.name}: desktop must not expose the page switcher`);
+  assert.equal(renderedTrackCount(layout.dashboardColumns), 3, `${viewport.name}: desktop dashboard must use three tracks`);
+  assert.equal(renderedTrackCount(layout.resultColumns), 3, `${viewport.name}: desktop results must use three tracks`);
+  assert(layout.sidebar.width >= 294, `${viewport.name}: sidebar must be at least 294px wide`);
+  assert(layout.resultSide.width >= 286, `${viewport.name}: result side column must be at least 286px wide`);
+  assert(
+    layout.resultMain.width >= (viewport.width === 1200 ? 500 : 520),
+    `${viewport.name}: result main column is too narrow (${layout.resultMain.width}px)`
+  );
   assert(
     layout.ticketTitle.scrollWidth <= layout.ticketTitle.clientWidth + 1,
     `${viewport.name}: ticket title is clipped (${layout.ticketTitle.scrollWidth} > ${layout.ticketTitle.clientWidth})`
   );
   assertContained(layout.ticketTools, layout.ticketHeader, `${viewport.name}: ticket tools`);
-
-  if (viewport.width < 1200) {
-    assert(
-      layout.ticketTitle.bottom <= layout.ticketTools.top + 1,
-      `${viewport.name}: compact ticket title must sit above tools`
-    );
-    assert(isVisible(layout.saveLabel), `${viewport.name}: save label must remain visible`);
-    assert(isVisible(layout.clearLabel), `${viewport.name}: clear label must remain visible`);
+  assert(layout.ticketTitle.bottom <= layout.ticketTools.top + 1, `${viewport.name}: ticket title must sit above tools`);
+  assert(isVisible(layout.saveLabel), `${viewport.name}: save label must remain visible`);
+  assert(isVisible(layout.clearLabel), `${viewport.name}: clear label must remain visible`);
+  for (const style of layout.numericStyles) {
+    assert(style.includes("tabular-nums"), `${viewport.name}: numeric fields must use tabular-nums`);
   }
 
   if (checkLowHeight && viewport.height <= 700) {
     assert.notEqual(layout.body.overflowY, "hidden", `${viewport.name}: low-height desktop must allow vertical scrolling`);
   }
+}
+
+async function assertCoreInteractions(page) {
+  const before = await page.locator("#newDilutedCost").textContent();
+  await page.locator("#buyPrice").fill("42");
+  await page.locator("#buyPrice").dispatchEvent("input");
+  await page.waitForFunction((previous) => {
+    return document.querySelector("#newDilutedCost")?.textContent !== previous;
+  }, before);
+  assert.notEqual(await page.locator("#newDilutedCost").textContent(), before, "buy price must update the result");
+
+  const plannedShares = Number((await page.locator("#targetPlanShares").textContent()).replace(/[^0-9.]/g, ""));
+  await page.locator("#applyTargetPlan").click();
+  assert.equal(Number(await page.locator("#buyShares").inputValue()), plannedShares, "target action must apply its planned shares");
 }
 
 async function assertDialog(page, buttonSelector, dialogSelector, viewportName) {
@@ -192,13 +246,23 @@ try {
         failures += 1;
         console.error(`FAIL ${viewport.name} ${theme}: ${error.message}`);
       }
-      if (["1093x700", "1440x900", "3840x2160"].includes(viewport.name)) {
+      if (["1093x700", "1280x720", "1366x768", "1440x900", "3840x2160"].includes(viewport.name)) {
         await page.screenshot({ path: join(artifactDir, `${viewport.name}-${theme}.png`), fullPage: true });
       }
     }
   }
 
   if (!compactOnly) {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto(url, { waitUntil: "networkidle" });
+    try {
+      await assertCoreInteractions(page);
+      console.log("PASS 1280x720 core interactions");
+    } catch (error) {
+      failures += 1;
+      console.error(`FAIL 1280x720 core interactions: ${error.message}`);
+    }
+
     await page.setViewportSize({ width: 1093, height: 700 });
     await page.goto(url, { waitUntil: "networkidle" });
     for (const [button, dialog] of [
