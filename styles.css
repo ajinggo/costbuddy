@@ -5590,3 +5590,42 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
     height: 12px;
   }
 }
+
+/* Short desktop windows scroll instead of compressing the work surface below readability. */
+@media (min-width: 1000px) and (max-height: 700px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .app-shell {
+    height: auto;
+    min-height: 800px;
+  }
+
+  .dashboard {
+    height: auto;
+    min-height: 780px;
+  }
+}
+
+/* Dialog chrome stays fixed while long settings content remains reachable. */
+.app-dialog[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.app-dialog .dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-height: 700px) {
+  .app-dialog {
+    max-height: calc(100vh - 20px);
+  }
+}

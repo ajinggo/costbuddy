@@ -149,23 +149,26 @@ async function assertDialog(page, buttonSelector, dialogSelector, viewportName) 
   await page.locator(buttonSelector).click();
   const dialog = page.locator(dialogSelector);
   await dialog.waitFor({ state: "visible" });
-  const geometry = await dialog.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    const body = element.querySelector(".dialog-body");
-    const bodyStyle = body ? getComputedStyle(body) : null;
-    return {
-      rect: { top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left },
-      viewport: { width: innerWidth, height: innerHeight },
-      bodyOverflowY: bodyStyle ? bodyStyle.overflowY : null
-    };
-  });
-  assert(geometry.rect.top >= 0, `${viewportName}: ${dialogSelector} escaped above the viewport`);
-  assert(geometry.rect.left >= 0, `${viewportName}: ${dialogSelector} escaped left of the viewport`);
-  assert(geometry.rect.right <= geometry.viewport.width, `${viewportName}: ${dialogSelector} escaped right of the viewport`);
-  assert(geometry.rect.bottom <= geometry.viewport.height, `${viewportName}: ${dialogSelector} escaped below the viewport`);
-  assert.equal(geometry.bodyOverflowY, "auto", `${viewportName}: ${dialogSelector} body must scroll`);
-  await page.keyboard.press("Escape");
-  await dialog.waitFor({ state: "hidden" });
+  try {
+    const geometry = await dialog.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const body = element.querySelector(".dialog-body");
+      const bodyStyle = body ? getComputedStyle(body) : null;
+      return {
+        rect: { top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left },
+        viewport: { width: innerWidth, height: innerHeight },
+        bodyOverflowY: bodyStyle ? bodyStyle.overflowY : null
+      };
+    });
+    assert(geometry.rect.top >= 0, `${viewportName}: ${dialogSelector} escaped above the viewport`);
+    assert(geometry.rect.left >= 0, `${viewportName}: ${dialogSelector} escaped left of the viewport`);
+    assert(geometry.rect.right <= geometry.viewport.width, `${viewportName}: ${dialogSelector} escaped right of the viewport`);
+    assert(geometry.rect.bottom <= geometry.viewport.height, `${viewportName}: ${dialogSelector} escaped below the viewport`);
+    assert.equal(geometry.bodyOverflowY, "auto", `${viewportName}: ${dialogSelector} body must scroll`);
+  } finally {
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({ state: "hidden" });
+  }
 }
 
 const { server, url } = await startStaticServer();
