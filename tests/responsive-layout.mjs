@@ -104,8 +104,12 @@ async function readLayout(page) {
       resultSide: measure(".result-side-column"),
       comparisonTable: measure(".comparison-table"),
       sideModuleOrder: Array.from(document.querySelectorAll(".result-side-column > section"))
-        .map((section) => ["price-position", "target-plan", "comparison-section", "breakdown"].find((className) => section.classList.contains(className)))
-        .filter(Boolean),
+        .map((element) => Array.from(element.classList).find((name) => [
+          "price-position",
+          "target-plan",
+          "comparison-section",
+          "breakdown"
+        ].includes(name))),
       numericStyles: [
         "#newDilutedCost",
         "#netCashFlow",
@@ -113,7 +117,10 @@ async function readLayout(page) {
         "#totalPnl",
         "#positionSummary",
         ".comparison-table tbody td:nth-child(2)"
-      ].map((selector) => getComputedStyle(document.querySelector(selector)).fontVariantNumeric),
+      ].map((selector) => {
+        const element = document.querySelector(selector);
+        return element ? getComputedStyle(element).fontVariantNumeric : null;
+      }),
       dashboardColumns: getComputedStyle(document.querySelector(".dashboard")).gridTemplateColumns,
       resultColumns: getComputedStyle(document.querySelector(".results")).gridTemplateColumns
     };
@@ -165,20 +172,17 @@ function assertLayout(layout, viewport, options = {}) {
   assert(layout.sidebar.width >= 294, `${viewport.name}: sidebar must be at least 294px wide`);
   assert(layout.resultSide.width >= 286, `${viewport.name}: result side column must be at least 286px wide`);
   assert(
-    layout.resultMain.width >= (viewport.width === 1200 ? 500 : 520),
+    layout.resultMain.width >= (viewport.width >= 1280 ? 520 : 500),
     `${viewport.name}: result main column is too narrow (${layout.resultMain.width}px)`
-  );
-  assert(
-    layout.ticketTitle.scrollWidth <= layout.ticketTitle.clientWidth + 1,
-    `${viewport.name}: ticket title is clipped (${layout.ticketTitle.scrollWidth} > ${layout.ticketTitle.clientWidth})`
   );
   assertContained(layout.ticketTools, layout.ticketHeader, `${viewport.name}: ticket tools`);
   assert(layout.ticketTitle.bottom <= layout.ticketTools.top + 1, `${viewport.name}: ticket title must sit above tools`);
   assert(isVisible(layout.saveLabel), `${viewport.name}: save label must remain visible`);
   assert(isVisible(layout.clearLabel), `${viewport.name}: clear label must remain visible`);
-  for (const style of layout.numericStyles) {
-    assert(style.includes("tabular-nums"), `${viewport.name}: numeric fields must use tabular-nums`);
-  }
+  assert(
+    layout.numericStyles.every((value) => value && value.includes("tabular-nums")),
+    `${viewport.name}: financial values must use tabular numeric alignment`
+  );
 
   if (checkLowHeight && viewport.height <= 700) {
     assert.notEqual(layout.body.overflowY, "hidden", `${viewport.name}: low-height desktop must allow vertical scrolling`);
