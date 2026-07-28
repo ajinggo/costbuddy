@@ -375,6 +375,23 @@
         </div>
 
         <div class="result-column result-side-column">
+          <section class="price-position panel" aria-labelledby="positionTitle">
+            <div class="section-title-row compact-title-row">
+              <div>
+                <p class="panel-kicker">PRICE / BASIS</p>
+                <h2 id="positionTitle">目前股价与回本价</h2>
+              </div>
+              <span id="positionSummary">49.00/92.23</span>
+            </div>
+            <div class="position-visual">
+              <div class="position-track" aria-hidden="true">
+                <div class="position-fill" id="positionFill"></div>
+                <span class="position-dot" id="positionDot"></span>
+              </div>
+              <div class="position-labels"><span data-position-zero>HK$0</span><span id="breakEvenLabel">回本 HK$92.23</span></div>
+            </div>
+          </section>
+
           <section class="target-plan panel" aria-labelledby="targetPlanTitle">
             <div class="target-plan-accent" aria-hidden="true"></div>
             <div class="section-title-row target-title-row">
@@ -425,23 +442,6 @@
                 </thead>
                 <tbody id="comparisonBody"></tbody>
               </table>
-            </div>
-          </section>
-
-          <section class="price-position panel" aria-labelledby="positionTitle">
-            <div class="section-title-row compact-title-row">
-              <div>
-                <p class="panel-kicker">PRICE / BASIS</p>
-                <h2 id="positionTitle">目前股价与回本价</h2>
-              </div>
-              <span id="positionSummary">49.00/92.23</span>
-            </div>
-            <div class="position-visual">
-              <div class="position-track" aria-hidden="true">
-                <div class="position-fill" id="positionFill"></div>
-                <span class="position-dot" id="positionDot"></span>
-              </div>
-              <div class="position-labels"><span data-position-zero>HK$0</span><span id="breakEvenLabel">回本 HK$92.23</span></div>
             </div>
           </section>
 

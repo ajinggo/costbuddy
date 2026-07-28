@@ -9,9 +9,9 @@
   var BACKUP_FORMAT = "costbuddy-backup";
   var BACKUP_VERSION = 2;
   var MAX_BACKUP_FILE_SIZE = 2 * 1024 * 1024;
-  var WORKSPACE_MIN_WIDTH = 1040;
+  var WORKSPACE_MIN_WIDTH = 1200;
   var WORKSPACE_MIN_HEIGHT = 660;
-  var MOBILE_LAYOUT_QUERY = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
+  var MOBILE_LAYOUT_QUERY = "(max-width: 1199px), (max-height: 520px) and (pointer: coarse)";
   var SHARE_FIELDS = {
     currentShares: "cs",
     currentCost: "cc",

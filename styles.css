@@ -2195,7 +2195,7 @@ body[data-market="us"] .basis-field-grid {
 /* Mobile workspace: preserve the desktop three-column cockpit above this
    breakpoint, but use a readable result-first vertical flow on phones instead
    of shrinking the complete desktop canvas to an unusable scale. */
-@media (max-width: 999px), (max-height: 520px) and (pointer: coarse) {
+@media (max-width: 1199px), (max-height: 520px) and (pointer: coarse) {
   html,
   body {
     width: 100%;
@@ -2908,7 +2908,7 @@ body[data-market="us"] .basis-field-grid {
 }
 
 /* Desktop readability pass: keep the one-screen cockpit while lifting the type floor. */
-@media (min-width: 1000px) and (min-height: 521px) {
+@media (min-width: 1200px) and (min-height: 521px) {
   .brand-group .eyebrow {
     font-size: 15px;
     font-weight: 900;
@@ -3035,7 +3035,7 @@ body[data-market="us"] .basis-field-grid {
 
 /* Cohesive desktop workspace refresh: a calmer header, one clear input rail,
    a stronger result hierarchy, and fewer nested card outlines. */
-@media (min-width: 1000px) and (min-height: 521px) {
+@media (min-width: 1200px) and (min-height: 521px) {
   .app-shell {
     padding: 10px;
   }
@@ -3436,7 +3436,7 @@ body[data-market="us"] .basis-field-grid {
     border-bottom-color: #eceff4;
   }
 
-  @media (max-width: 1180px) {
+  @media (max-width: 1439px) {
     .dashboard {
       grid-template-columns: minmax(282px, .82fr) 1px minmax(0, 2.5fr);
       column-gap: 8px;
@@ -3521,7 +3521,7 @@ body[data-market="us"] .basis-field-grid {
 }
 
 /* Keep the mobile lot matrix readable without clipping larger cash amounts. */
-@media (max-width: 999px), (max-height: 520px) and (pointer: coarse) {
+@media (max-width: 1199px), (max-height: 520px) and (pointer: coarse) {
   .comparison-table :is(th, td):nth-child(1) { width: 13%; }
   .comparison-table :is(th, td):nth-child(2) { width: 15%; }
   .comparison-table :is(th, td):nth-child(3) { width: 30%; }
@@ -3676,20 +3676,7 @@ body[data-market="us"] .basis-field-grid {
   background: #fff5f4;
 }
 
-@media (max-width: 1180px) and (min-width: 1000px) {
-  .clear-plan-button {
-    width: 27px;
-    flex: 0 0 27px;
-    padding-inline: 0;
-  }
-
-  .clear-plan-button > span,
-  .clear-plan-button .clear-plan-chevron {
-    display: none;
-  }
-}
-
-@media (max-width: 999px), (max-height: 520px) and (pointer: coarse) {
+@media (max-width: 1199px), (max-height: 520px) and (pointer: coarse) {
   .controls-header-tools {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -3743,7 +3730,7 @@ body[data-market="us"] .basis-field-grid {
   display: none;
 }
 
-@media (max-width: 999px), (max-height: 520px) and (pointer: coarse) {
+@media (max-width: 1199px), (max-height: 520px) and (pointer: coarse) {
   .dashboard {
     grid-template-areas:
       "header"
@@ -3929,7 +3916,7 @@ html[data-theme="dark"] .theme-icon-sun { display: block; }
 }
 .chart-axis-label { fill: var(--muted); }
 
-@media (min-width: 1000px) and (min-height: 521px) {
+@media (min-width: 1200px) and (min-height: 521px) {
   .brand-group .eyebrow { font-size: 16px; }
   .app-header h1 { font-size: 18px; }
   .lead { font-size: 11px; }
@@ -4038,7 +4025,7 @@ html[data-theme="dark"] .clear-plan-menu button:hover,
 html[data-theme="dark"] .clear-plan-menu button:focus-visible { background: #22303c; }
 html[data-theme="dark"] .copy-toast { color: #f7f9f9; background: #192734; border-color: #425466; }
 
-@media (max-width: 999px), (max-height: 520px) and (pointer: coarse) {
+@media (max-width: 1199px), (max-height: 520px) and (pointer: coarse) {
   .theme-toggle { margin-left: auto; min-width: 72px; height: 36px; font-size: 11px; }
   .header-disclaimer { color: var(--muted); font-size: 11px; }
   .field > span:first-child, .field-title, .target-inline-field > span:first-child, .slider-heading label { font-size: 12px; }
@@ -4055,7 +4042,7 @@ html[data-theme="dark"] .copy-toast { color: #f7f9f9; background: #192734; borde
   --faint: #1f2937;
 }
 
-@media (min-width: 1000px) and (min-height: 521px) {
+@media (min-width: 1200px) and (min-height: 521px) {
   .brand-group .eyebrow { font-size: 17px; }
   .app-header h1 { font-size: 19px; }
   .lead { font-size: 11.5px; }
@@ -4149,14 +4136,6 @@ html[data-theme="dark"] .copy-toast { color: #f7f9f9; background: #192734; borde
   :is(.target-plan,.chart-section,.stage-section,.comparison-section,.price-position,.breakdown) .section-title-row h2 { font-size: 15.5px; }
 }
 
-@media (max-width: 1180px) and (min-width: 1000px) {
-  .header-disclaimer { font-size: 9.75px; }
-  .header-actions :is(.local-badge, .header-tool-button, .reset-button) { font-size: 10px; }
-  .metric-grid .metric { padding-inline: 6px; }
-  .metric div > strong { font-size: 12.5px; }
-  #positionSummary, #comparisonMeta { max-width: 64px; }
-}
-
 /* X-inspired dark blue: every light-theme hard-coded label gets a dark equivalent. */
 html[data-theme="dark"] .mobile-page-switcher,
 html[data-theme="dark"] .app-header,
@@ -4216,7 +4195,7 @@ html[data-theme="dark"] .table-action:not(:disabled) { color: #8ecdf7; border-co
 html[data-theme="dark"] .clear-plan-menu button b { color: var(--muted); border-color: var(--line-strong); }
 html[data-theme="dark"] .clear-plan-menu .clear-plan-all b { color: #ff8a80; border-color: rgba(244,33,46,.5); background: rgba(244,33,46,.08); }
 
-@media (max-width: 999px), (max-height: 520px) and (pointer: coarse) {
+@media (max-width: 1199px), (max-height: 520px) and (pointer: coarse) {
   .brand-group .eyebrow { font-size: 18px; }
   .app-header h1 { font-size: 20px; }
   .lead { font-size: 12px; }
@@ -4239,7 +4218,7 @@ html[data-theme="dark"] .breakdown .section-title-row > span {
   color: var(--muted) !important;
 }
 
-@media (max-width: 999px), (max-height: 520px) and (pointer: coarse) {
+@media (max-width: 1199px), (max-height: 520px) and (pointer: coarse) {
   .mobile-page-switcher button,
   .mobile-page-switcher button span {
     color: var(--muted);
@@ -4253,7 +4232,7 @@ html[data-theme="dark"] .breakdown .section-title-row > span {
 }
 
 /* Keep the compact desktop target planner readable before the full 125% baseline kicks in. */
-@media (min-width: 1000px) and (min-height: 521px) {
+@media (min-width: 1200px) and (min-height: 521px) {
   .result-side-column .target-plan-stats {
     grid-template-columns: .72fr 1.28fr 1fr;
   }
@@ -4827,7 +4806,7 @@ html[data-theme="dark"] .support-card { border-color: var(--line); }
 html[data-theme="dark"] .feedback-compose textarea { color: var(--ink); border-color: var(--line-strong); background: transparent; }
 html[data-theme="dark"] .feedback-compose textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29,155,240,.12); }
 
-@media (min-width: 1000px) and (max-width: 1400px) and (min-height: 521px) {
+@media (min-width: 1200px) and (max-width: 1439px) and (min-height: 521px) {
   .support-toggle {
     width: 31px;
     min-width: 31px;
@@ -4837,7 +4816,7 @@ html[data-theme="dark"] .feedback-compose textarea:focus { border-color: var(--b
   .support-toggle span { display: none; }
 }
 
-@media (max-width: 999px), (max-height: 520px) and (pointer: coarse) {
+@media (max-width: 1199px), (max-height: 520px) and (pointer: coarse) {
   .support-toggle {
     width: 36px;
     min-width: 36px;
@@ -5452,7 +5431,7 @@ html[data-theme="dark"] .support-copy-button:hover {
   border-color: #8ecdf7;
 }
 
-@media (max-width: 999px), (max-height: 520px) and (pointer: coarse) {
+@media (max-width: 1199px), (max-height: 520px) and (pointer: coarse) {
   .support-email-contact {
     align-items: flex-start;
     flex-direction: column;
@@ -5520,15 +5499,15 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
 }
 
 /* Responsive desktop consolidation: compact laptops keep the cockpit without crowding controls. */
-@media (min-width: 1000px) and (max-width: 1199px) {
+@media (min-width: 1200px) and (max-width: 1439px) {
   .dashboard {
-    grid-template-columns: minmax(276px, .82fr) 1px minmax(0, 2.5fr);
-    column-gap: 6px;
+    grid-template-columns: clamp(294px, 25.4vw, 322px) 1px minmax(0, 1fr);
+    column-gap: 8px;
   }
 
   .results {
-    grid-template-columns: minmax(0, 1.48fr) 1px minmax(266px, 1fr);
-    column-gap: 6px;
+    grid-template-columns: minmax(500px, 1.72fr) 1px minmax(286px, .96fr);
+    column-gap: 8px;
   }
 
   .controls {
@@ -5592,7 +5571,7 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
 }
 
 /* Short desktop windows scroll instead of compressing the work surface below readability. */
-@media (min-width: 1000px) and (max-height: 700px) {
+@media (min-width: 1200px) and (max-height: 700px) {
   html,
   body {
     height: auto;
