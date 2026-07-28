@@ -21,9 +21,16 @@
   <img alt="Local First" src="https://img.shields.io/badge/Data-Local_First-2563EB?style=flat-square">
   <img alt="Responsive" src="https://img.shields.io/badge/UI-Desktop_%7C_Mobile_%7C_4K-7C3AED?style=flat-square">
   <img alt="Markets" src="https://img.shields.io/badge/Markets-HK%20%7C%20US-EF7B45?style=flat-square">
+  <img alt="Last commit" src="https://img.shields.io/github/last-commit/ajinggo/costbuddy?style=flat-square&color=0F766E">
+  <img alt="Repository size" src="https://img.shields.io/github/repo-size/ajinggo/costbuddy?style=flat-square&color=475569">
 </p>
 
 [正式网站](https://costbuddy.space) · [GitHub Pages](https://ajinggo.github.io/costbuddy/) · [试用说明书](USER_GUIDE.md) · [网页版说明书](https://costbuddy.space/USER_GUIDE.html)
+
+<br />
+
+<sub>快速导航</sub><br />
+[为什么做它？](#为什么做-costbuddy)　·　[产品界面](#产品界面)　·　[使用场景](#你可以用它做什么)　·　[核心功能](#核心功能)　·　[计算口径](#计算口径)
 
 </div>
 
@@ -51,6 +58,29 @@
 </table>
 
 > CostBuddy 不预测涨跌。它只负责把交易计划和成本变化算得更清楚，让每次操作多一份可量化的参考。
+
+## 产品界面
+
+<div align="center">
+  <a href="https://costbuddy.space" title="打开 CostBuddy">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./assets/product-dark.jpg">
+      <source media="(prefers-color-scheme: light)" srcset="./assets/product-desktop.jpg">
+      <img src="./assets/product-desktop.jpg" alt="CostBuddy 桌面端产品界面" width="100%">
+    </picture>
+  </a>
+  <sub>真实产品界面 · 图片会跟随系统深浅色模式切换 · 点击图片进入网站</sub>
+</div>
+
+<br />
+
+<table>
+  <tr>
+    <td align="center"><strong>01 · INPUT</strong><br><sub>输入当前持仓与交易计划</sub></td>
+    <td align="center"><strong>02 · CALCULATE</strong><br><sub>即时测算成本与资金变化</sub></td>
+    <td align="center"><strong>03 · COMPARE</strong><br><sub>对比方案后再做决定</sub></td>
+  </tr>
+</table>
 
 ## 你可以用它做什么？
 
@@ -206,7 +236,9 @@ http://localhost:8765/
 ```text
 .
 ├── assets/
-│   └── readme-cover.svg  # README 品牌封面
+│   ├── readme-cover.svg   # README 品牌封面
+│   ├── product-desktop.jpg # 日间产品界面
+│   └── product-dark.jpg    # 夜间产品界面
 ├── index.html            # 页面结构与内容
 ├── styles.css            # 响应式、日间和夜间样式
 ├── calculator.js         # 计算、持仓、方案、备份与分享逻辑
@@ -245,6 +277,11 @@ http://localhost:8765/
 > 结果仅用于持仓测算与方案预估，不构成投资建议；暂不包含汇率及未明确录入的其他费用。自动费用为估算值，应以交易所、监管机构及实际券商成交单为准。
 
 <div align="center">
+
+<a href="https://costbuddy.space"><img alt="Open CostBuddy" src="https://img.shields.io/badge/Open_CostBuddy-costbuddy.space-4F65E8?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
+
+<br />
+<br />
 
 Made for clearer cost decisions · **CostBuddy 小算盘**
 
