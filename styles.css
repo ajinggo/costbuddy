@@ -1970,3 +1970,128 @@ body.is-window-fitted .app-shell {
   transform: scale(var(--workspace-scale));
   transform-origin: 0 0;
 }
+
+/* Three-column workspace redesign: inputs, core result, and action tools each
+   have a clear lane while staying inside a single desktop viewport. */
+.dashboard {
+  grid-template-columns: minmax(292px, .88fr) 1px minmax(0, 2.52fr);
+  grid-template-areas:
+    "header header header"
+    "sidebar divider results";
+  column-gap: 5px;
+  row-gap: 10px;
+}
+
+/* Dividers are real grid tracks rather than offset borders, so they resize with
+   the columns and are always clipped safely inside the workspace. */
+.dashboard::before,
+.results::before {
+  content: "";
+  width: 1px;
+  height: calc(100% - 8px);
+  align-self: center;
+  border-radius: 999px;
+  background: var(--line-strong);
+  pointer-events: none;
+}
+
+.dashboard::before {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.results {
+  grid-template-columns: minmax(420px, 1.6fr) 1px minmax(320px, 1fr);
+  column-gap: 5px;
+  row-gap: 0;
+}
+
+.results::before {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.result-column {
+  gap: 10px;
+}
+
+/* Core result: conclusion -> summary -> basis flow -> market curve. */
+.result-main-column {
+  grid-column: 1;
+  grid-row: 1;
+  grid-template-rows: 126px 64px 112px minmax(0, 1fr);
+}
+
+/* Decision tools: target plan -> lot matrix -> price position -> cash ledger. */
+.result-side-column {
+  grid-column: 3;
+  grid-row: 1;
+  grid-template-rows: 146px minmax(190px, 1fr) 80px 142px;
+}
+
+/* The target planner becomes a compact vertical card in the decision column. */
+.result-side-column .target-plan-body {
+  grid-template-columns: 118px minmax(0, 1fr);
+  grid-template-areas:
+    "field action"
+    "details details";
+  column-gap: 8px;
+  row-gap: 6px;
+  align-items: end;
+}
+
+.result-side-column .target-inline-field {
+  grid-area: field;
+}
+
+.result-side-column .target-plan-copy {
+  grid-area: details;
+}
+
+.result-side-column .apply-button {
+  grid-area: action;
+  width: 100%;
+}
+
+.result-side-column .target-plan-copy > p {
+  margin-bottom: 4px;
+}
+
+.result-side-column .target-plan-stats span {
+  padding: 4px 5px;
+}
+
+/* Give the basis-flow cards more room in the primary reading column. */
+.result-main-column .stage-grid {
+  grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr) 34px minmax(0, 1fr);
+}
+
+.result-main-column .stage-card {
+  padding-inline: 8px;
+}
+
+@media (max-height: 760px) {
+  .result-main-column {
+    grid-template-rows: 122px 58px 103px minmax(0, 1fr);
+  }
+
+  .result-side-column {
+    grid-template-rows: 136px minmax(178px, 1fr) 76px 135px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .dashboard {
+    grid-template-columns: minmax(276px, .82fr) 1px minmax(0, 2.5fr);
+  }
+
+  .results {
+    grid-template-columns: minmax(400px, 1.48fr) 1px minmax(292px, 1fr);
+  }
+}
+
+/* Real-time recalculation is implicit; removing the redundant chip keeps the
+   order-ticket header calm and prevents it from squeezing the first column. */
+.controls-header .live-chip {
+  display: none;
+}

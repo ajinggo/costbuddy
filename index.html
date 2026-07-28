@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="小算盘">
   <title>小算盘 · costbuddy</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260728-21">
+  <link rel="stylesheet" href="styles.css?v=20260728-23">
 </head>
 <body>
   <main class="app-shell">
@@ -263,32 +263,32 @@
             </article>
           </section>
 
-          <section class="target-plan panel" aria-labelledby="targetPlanTitle">
-            <div class="target-plan-accent" aria-hidden="true"></div>
-            <div class="section-title-row target-title-row">
+          <section class="stage-section panel" aria-labelledby="stageTitle">
+            <div class="section-title-row">
               <div>
-                <p class="panel-kicker">TARGET BASIS</p>
-                <h2 id="targetPlanTitle">目标成本反推</h2>
+                <p class="panel-kicker">COST BASIS FLOW</p>
+                <h2 id="stageTitle">回本成本演变</h2>
               </div>
-              <span class="target-badge" id="targetPlanBadge">目标 HK$90.00</span>
+              <span>按交易顺序</span>
             </div>
-            <div class="target-plan-body" id="targetPlanBody">
-              <label class="target-inline-field" for="targetCost">
-                <span>目标回本成本</span>
-                <span class="input-wrap target-input-wrap">
-                  <input id="targetCost" name="targetCost" form="calculatorForm" type="number" min="0.01" step="0.01" value="90" inputmode="decimal">
-                  <small>HKD / 股</small>
-                </span>
-              </label>
-              <div class="target-plan-copy">
-                <p id="targetPlanMessage">理论需买入 132.61 股；港股按整手交易，至少买入 2 手。</p>
-                <div class="target-plan-stats">
-                  <span>整手股数<strong id="targetPlanShares">200 股</strong></span>
-                  <span>预计投入<strong id="targetPlanOutlay">HK$9,818.50</strong></span>
-                  <span>实际新成本<strong id="targetPlanActualCost">HK$86.05</strong></span>
-                </div>
-              </div>
-              <button class="apply-button" id="applyTargetPlan" type="button">应用 2 手方案</button>
+            <div class="stage-grid">
+              <article class="stage-card">
+                <span class="stage-step">交易前</span>
+                <strong id="beforeStageCost">HK$94.00</strong>
+                <small id="beforeStageShares">600 股</small>
+              </article>
+              <span class="stage-connector" aria-hidden="true"><i></i><b>卖出</b></span>
+              <article class="stage-card stage-sell">
+                <span class="stage-step">卖出后</span>
+                <strong id="afterSellStageCost">HK$100.84</strong>
+                <small id="afterSellStageShares">500 股</small>
+              </article>
+              <span class="stage-connector" aria-hidden="true"><i></i><b>买入</b></span>
+              <article class="stage-card stage-buy">
+                <span class="stage-step">买入后</span>
+                <strong id="afterBuyStageCost">HK$92.23</strong>
+                <small id="afterBuyStageShares">600 股</small>
+              </article>
             </div>
           </section>
 
@@ -318,32 +318,32 @@
         </div>
 
         <div class="result-column result-side-column">
-          <section class="stage-section panel" aria-labelledby="stageTitle">
-            <div class="section-title-row">
+          <section class="target-plan panel" aria-labelledby="targetPlanTitle">
+            <div class="target-plan-accent" aria-hidden="true"></div>
+            <div class="section-title-row target-title-row">
               <div>
-                <p class="panel-kicker">COST BASIS FLOW</p>
-                <h2 id="stageTitle">回本成本演变</h2>
+                <p class="panel-kicker">TARGET BASIS</p>
+                <h2 id="targetPlanTitle">目标成本反推</h2>
               </div>
-              <span>按交易顺序</span>
+              <span class="target-badge" id="targetPlanBadge">目标 HK$90.00</span>
             </div>
-            <div class="stage-grid">
-              <article class="stage-card">
-                <span class="stage-step">交易前</span>
-                <strong id="beforeStageCost">HK$94.00</strong>
-                <small id="beforeStageShares">600 股</small>
-              </article>
-              <span class="stage-connector" aria-hidden="true"><i></i><b>卖出</b></span>
-              <article class="stage-card stage-sell">
-                <span class="stage-step">卖出后</span>
-                <strong id="afterSellStageCost">HK$100.84</strong>
-                <small id="afterSellStageShares">500 股</small>
-              </article>
-              <span class="stage-connector" aria-hidden="true"><i></i><b>买入</b></span>
-              <article class="stage-card stage-buy">
-                <span class="stage-step">买入后</span>
-                <strong id="afterBuyStageCost">HK$92.23</strong>
-                <small id="afterBuyStageShares">600 股</small>
-              </article>
+            <div class="target-plan-body" id="targetPlanBody">
+              <label class="target-inline-field" for="targetCost">
+                <span>目标回本成本</span>
+                <span class="input-wrap target-input-wrap">
+                  <input id="targetCost" name="targetCost" form="calculatorForm" type="number" min="0.01" step="0.01" value="90" inputmode="decimal">
+                  <small>HKD / 股</small>
+                </span>
+              </label>
+              <div class="target-plan-copy">
+                <p id="targetPlanMessage">理论需买入 132.61 股；港股按整手交易，至少买入 2 手。</p>
+                <div class="target-plan-stats">
+                  <span>整手股数<strong id="targetPlanShares">200 股</strong></span>
+                  <span>预计投入<strong id="targetPlanOutlay">HK$9,818.50</strong></span>
+                  <span>实际新成本<strong id="targetPlanActualCost">HK$86.05</strong></span>
+                </div>
+              </div>
+              <button class="apply-button" id="applyTargetPlan" type="button">应用 2 手方案</button>
             </div>
           </section>
 
