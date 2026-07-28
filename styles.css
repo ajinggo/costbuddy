@@ -5623,6 +5623,7 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
     min-width: 0;
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 12px;
+    margin-inline: -12px;
     border-radius: 12px 12px 0 0;
   }
 
@@ -5695,6 +5696,19 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
 
   .control-section {
     padding: 10px 11px 11px;
+  }
+
+  .position-input-grid {
+    grid-template-columns: clamp(96px, 7.5vw, 108px) minmax(0, 1fr);
+  }
+
+  .position-input-grid .compact-field .input-wrap input {
+    padding-inline: 1px;
+  }
+
+  .position-input-grid .compact-field .input-wrap small {
+    min-width: 18px;
+    padding-right: 4px;
   }
 
   .result-column {
@@ -5875,6 +5889,44 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
   .local-badge {
     display: none;
   }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding-inline: 1px;
+  }
+
+  .comparison-table :is(th, td):nth-child(3) {
+    width: 31%;
+  }
+
+  .comparison-table :is(th, td):nth-child(5) {
+    width: 13%;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1279px) and (min-height: 521px) {
+  .result-side-column {
+    grid-template-rows: 84px 191px minmax(214px, 1fr) 160px;
+  }
+
+  .result-side-column .section-title-row > div {
+    display: grid;
+    flex: 0 1 auto;
+    gap: 2px;
+  }
+
+  .result-side-column .section-title-row > span {
+    flex: 0 0 auto;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .target-plan-copy > p {
+    line-height: 1.25;
+    text-overflow: clip;
+    text-wrap: balance;
+    white-space: normal;
+  }
 }
 
 @media (min-width: 1440px) and (max-width: 2199px) and (min-height: 521px) {
@@ -5913,5 +5965,19 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
   html[data-theme="dark"] .comparison-table td,
   html[data-theme="dark"] .breakdown dl > div {
     border-color: #263746;
+  }
+}
+
+@media (min-width: 2200px) and (min-height: 1200px) {
+  .result-column {
+    gap: 16px;
+  }
+
+  .result-side-column {
+    grid-template-rows: 136px 270px minmax(330px, 1fr) 246px;
+  }
+
+  .comparison-section .table-scroll {
+    height: calc(100% - 56px);
   }
 }

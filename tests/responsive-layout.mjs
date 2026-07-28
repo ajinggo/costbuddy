@@ -102,6 +102,7 @@ async function readLayout(page) {
       results: measure(".results"),
       resultMain: measure(".result-main-column"),
       resultSide: measure(".result-side-column"),
+      comparisonPanel: measure(".comparison-section"),
       comparisonTable: measure(".comparison-table"),
       sideModuleOrder: Array.from(document.querySelectorAll(".result-side-column > section"))
         .map((element) => Array.from(element.classList).find((name) => [
@@ -121,6 +122,27 @@ async function readLayout(page) {
         const element = document.querySelector(selector);
         return element ? getComputedStyle(element).fontVariantNumeric : null;
       }),
+      inputTextFits: ["#currentShares", "#currentCost", "#lotSize"].map((selector) => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const style = getComputedStyle(element);
+        const context = document.createElement("canvas").getContext("2d");
+        context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        return {
+          available: element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+          required: context.measureText(element.value).width
+        };
+      }),
+      criticalTextFits: [
+        document.querySelector("#positionSummary"),
+        document.querySelector("#targetPlanBadge"),
+        document.querySelector("#comparisonMeta"),
+        document.querySelector(".target-plan-copy > p"),
+        ...document.querySelectorAll(".comparison-table tbody td")
+      ].map((element) => element ? {
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth
+      } : null),
       dashboardColumns: getComputedStyle(document.querySelector(".dashboard")).gridTemplateColumns,
       resultColumns: getComputedStyle(document.querySelector(".results")).gridTemplateColumns
     };
@@ -169,6 +191,14 @@ function assertLayout(layout, viewport, options = {}) {
   assert(!isVisible(layout.mobileSwitcher), `${viewport.name}: desktop must not expose the page switcher`);
   assert.equal(renderedTrackCount(layout.dashboardColumns), 3, `${viewport.name}: desktop dashboard must use three tracks`);
   assert.equal(renderedTrackCount(layout.resultColumns), 3, `${viewport.name}: desktop results must use three tracks`);
+  assert(
+    layout.resultSide.scrollHeight <= layout.resultSide.clientHeight + 1,
+    `${viewport.name}: decision column clips vertical content (${layout.resultSide.scrollHeight} > ${layout.resultSide.clientHeight})`
+  );
+  assert(
+    layout.comparisonPanel.scrollHeight <= layout.comparisonPanel.clientHeight + 1,
+    `${viewport.name}: lot matrix clips vertical content (${layout.comparisonPanel.scrollHeight} > ${layout.comparisonPanel.clientHeight})`
+  );
   assert(layout.sidebar.width >= 294, `${viewport.name}: sidebar must be at least 294px wide`);
   assert(layout.resultSide.width >= 286, `${viewport.name}: result side column must be at least 286px wide`);
   assert(
@@ -182,6 +212,14 @@ function assertLayout(layout, viewport, options = {}) {
   assert(
     layout.numericStyles.every((value) => value && value.includes("tabular-nums")),
     `${viewport.name}: financial values must use tabular numeric alignment`
+  );
+  assert(
+    layout.inputTextFits.every((measurement) => measurement && measurement.available + 0.5 >= measurement.required),
+    `${viewport.name}: holding inputs must show their complete numeric values`
+  );
+  assert(
+    layout.criticalTextFits.every((measurement) => measurement && measurement.scrollWidth <= measurement.clientWidth + 1),
+    `${viewport.name}: decision labels and amounts must remain fully visible`
   );
 
   if (checkLowHeight && viewport.height <= 700) {
