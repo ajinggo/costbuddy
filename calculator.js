@@ -8,6 +8,8 @@
   var BACKUP_FORMAT = "costbuddy-backup";
   var BACKUP_VERSION = 1;
   var MAX_BACKUP_FILE_SIZE = 2 * 1024 * 1024;
+  var WORKSPACE_MIN_WIDTH = 1040;
+  var WORKSPACE_MIN_HEIGHT = 720;
   var SHARE_FIELDS = {
     currentShares: "cs",
     currentCost: "cc",
@@ -116,6 +118,32 @@
 
   function element(id) {
     return document.getElementById(id);
+  }
+
+  function fitWorkspaceToWindow() {
+    var viewportWidth = Math.max(1, window.innerWidth || document.documentElement.clientWidth || WORKSPACE_MIN_WIDTH);
+    var viewportHeight = Math.max(1, window.innerHeight || document.documentElement.clientHeight || WORKSPACE_MIN_HEIGHT);
+    var scale = Math.min(1, viewportWidth / WORKSPACE_MIN_WIDTH, viewportHeight / WORKSPACE_MIN_HEIGHT);
+    var shouldFit = scale < 0.9995;
+    var workspaceWidth = shouldFit ? viewportWidth / scale : viewportWidth;
+    var workspaceHeight = shouldFit ? viewportHeight / scale : viewportHeight;
+    var rootStyle = document.documentElement.style;
+
+    rootStyle.setProperty("--workspace-scale", scale.toFixed(5));
+    rootStyle.setProperty("--workspace-width", workspaceWidth.toFixed(2) + "px");
+    rootStyle.setProperty("--workspace-height", workspaceHeight.toFixed(2) + "px");
+    document.body.classList.toggle("is-window-fitted", shouldFit);
+  }
+
+  var workspaceFitFrame = 0;
+  function scheduleWorkspaceFit() {
+    if (workspaceFitFrame) {
+      window.cancelAnimationFrame(workspaceFitFrame);
+    }
+    workspaceFitFrame = window.requestAnimationFrame(function () {
+      workspaceFitFrame = 0;
+      fitWorkspaceToWindow();
+    });
   }
 
   function numberValue(id) {
@@ -2031,6 +2059,9 @@
       }
     });
   });
+
+  window.addEventListener("resize", scheduleWorkspaceFit);
+  fitWorkspaceToWindow();
 
   loadHoldingRecords();
   var loadedSharedState = loadSharedState();

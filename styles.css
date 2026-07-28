@@ -12,13 +12,16 @@
   --red: #d92d20;
   --amber: #b54708;
   --radius: 12px;
+  --workspace-scale: 1;
+  --workspace-width: 100vw;
+  --workspace-height: 100vh;
   --font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body {
-  min-width: 1040px;
+  min-width: 0;
   color: var(--ink);
   background: var(--bg);
   font-family: var(--font);
@@ -417,7 +420,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 @media (max-width: 1180px) {
-  body { min-width: 960px; }
+  body { min-width: 0; }
   .dashboard { grid-template-columns: 270px minmax(0,1fr); }
   .results { grid-template-columns: minmax(0,1.3fr) minmax(300px,.9fr); }
   .result-hero { grid-template-columns: minmax(0,1fr) 160px; }
@@ -427,7 +430,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 @media (max-width: 1040px) {
-  .app-shell { width: 1040px; }
+  .app-shell { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1954,4 +1957,16 @@ input[type="range"]::-webkit-slider-thumb {
     width: 100%;
     flex-wrap: wrap;
   }
+}
+
+/* Scale the desktop workspace down only when the browser window is smaller than
+   the complete one-screen layout. Dialogs stay at native size for readability. */
+body.is-window-fitted .app-shell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--workspace-width);
+  height: var(--workspace-height);
+  transform: scale(var(--workspace-scale));
+  transform-origin: 0 0;
 }
