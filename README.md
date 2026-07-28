@@ -229,6 +229,17 @@ http://localhost:8765/
 
 也可以直接使用浏览器打开 `index.html`。
 
+### 响应式布局检查（开发者可选）
+
+正式页面仍然无需构建。只有在修改布局时才需要安装开发依赖并运行浏览器检查：
+
+```bash
+npm install
+npm run test:responsive
+```
+
+检查覆盖窄窗口、常见笔记本、标准桌面、2K、4K、日间/夜间模式和主要弹窗。测试截图保存在本地 `test-artifacts/responsive/`，不会提交到仓库。
+
 <details>
 <summary><strong>查看项目结构</strong></summary>
 <br>
