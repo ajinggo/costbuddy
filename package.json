@@ -1,0 +1,12 @@
+{
+  "name": "costbuddy",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:responsive",
+    "test:responsive": "node tests/responsive-layout.mjs",
+    "test:responsive:compact": "node tests/responsive-layout.mjs --compact"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1"
+  }
+}

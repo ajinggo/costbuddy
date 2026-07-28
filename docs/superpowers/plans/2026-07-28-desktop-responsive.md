@@ -246,7 +246,7 @@ async function assertDialog(page, buttonSelector, dialogSelector, viewportName) 
 }
 
 const { server, url } = await startStaticServer();
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ channel: "chrome", headless: true });
 let failures = 0;
 
 try {
