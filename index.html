@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f6fb">
-  <meta name="description" content="小算盘（costbuddy）：轻松测算港股买卖后的资金回本成本，支持费用估算、目标反推、方案对比和分享。">
+  <script>try{if(localStorage.getItem("costbuddy-theme-v1")==="dark"){document.documentElement.dataset.theme="dark";document.querySelector('meta[name="theme-color"]').content="#0f1419";}}catch(e){}</script>
+  <meta name="description" content="小算盘（CostBuddy）：轻松测算港股与美股买卖后的资金回本成本，支持费用估算、目标反推、方案对比和分享。">
   <meta name="apple-mobile-web-app-title" content="小算盘">
-  <title>小算盘 · costbuddy</title>
+  <title>小算盘 · CostBuddy</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260728-23">
+  <link rel="stylesheet" href="styles.css?v=20260728-59">
 </head>
-<body>
+<body data-mobile-page="ticket">
   <main class="app-shell">
     <div class="dashboard">
         <header class="app-header panel">
@@ -26,11 +27,20 @@
                 <circle class="calculator-spark" cx="29.5" cy="5.5" r="2"/>
               </svg>
             </div>
-            <div>
-              <p class="eyebrow">costbuddy</p>
+            <div class="brand-copy">
+              <p class="eyebrow">CostBuddy</p>
               <h1>小算盘</h1>
               <p class="lead">成本算得清，交易更从容</p>
             </div>
+            <button class="theme-toggle" id="themeToggleButton" type="button" aria-pressed="false" aria-label="切换到夜间模式" title="切换到夜间模式">
+              <svg class="theme-icon theme-icon-moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.2 12.8A6.8 6.8 0 0 1 7.2 3.8a6.9 6.9 0 1 0 9 9Z"/></svg>
+              <svg class="theme-icon theme-icon-sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.2"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4"/></svg>
+              <span id="themeToggleLabel">夜间</span>
+            </button>
+            <button class="support-toggle" id="supportFeedbackButton" type="button" aria-haspopup="dialog" aria-controls="supportDialog" title="支持 CostBuddy 或提交使用建议">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16.4S3.3 12.2 3.3 7.6A3.6 3.6 0 0 1 10 5.7a3.6 3.6 0 0 1 6.7 1.9c0 4.6-6.7 8.8-6.7 8.8Z"/></svg>
+              <span>支持</span>
+            </button>
           </div>
           <p class="disclaimer header-disclaimer">结果仅用于持仓测算，不构成投资建议；暂不包含汇率及其他费用。股数为 0 时，该侧手续费不计入。</p>
           <div class="header-actions">
@@ -62,6 +72,15 @@
           </div>
         </header>
 
+      <nav class="mobile-page-switcher" aria-label="手机端页面切换">
+        <button class="is-active" type="button" data-mobile-page-target="ticket" aria-selected="true" aria-controls="calculatorForm">
+          <span>01</span>交易参数
+        </button>
+        <button type="button" data-mobile-page-target="results" aria-selected="false" aria-controls="calculationResults">
+          <span>02</span>测算结果
+        </button>
+      </nav>
+
       <aside class="sidebar-column">
         <form class="panel controls" id="calculatorForm" novalidate>
         <div class="controls-header">
@@ -70,13 +89,35 @@
             <h2>交易参数</h2>
           </div>
           <div class="controls-header-tools">
-            <button class="save-holding-button" id="saveHoldingButton" type="button">
+            <button class="save-holding-button" id="saveHoldingButton" type="button" aria-label="保存当前持仓">
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3.5h10l2 2v11H4z"/><path d="M7 3.5v5h6v-5M7 16.5v-5h6v5"/></svg>
               <span id="saveHoldingLabel">保存当前</span>
             </button>
             <button class="fee-mode-button" id="feeSettingsButton" type="button" aria-haspopup="dialog">
               费用：<span id="feeModeLabel">手动</span>
             </button>
+            <div class="clear-plan-control">
+              <button class="clear-plan-button" id="clearPlanButton" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="clearPlanMenu">
+                <svg class="clear-plan-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 6h11M8 3.5h4M6.5 6l.6 10h5.8l.6-10M8.5 9v4.5M11.5 9v4.5"/></svg>
+                <span>清除</span>
+                <svg class="clear-plan-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+              </button>
+              <div class="clear-plan-menu" id="clearPlanMenu" role="menu" aria-label="选择要清除的交易计划" hidden>
+                <p>选择清除范围</p>
+                <button type="button" role="menuitem" data-clear-plan="buy">
+                  <span><b>买</b><strong>只清除买入计划</strong></span>
+                  <small>价格、股数与买入费用归零</small>
+                </button>
+                <button type="button" role="menuitem" data-clear-plan="sell">
+                  <span><b>卖</b><strong>只清除卖出计划</strong></span>
+                  <small>价格、股数与卖出费用归零</small>
+                </button>
+                <button class="clear-plan-all" type="button" role="menuitem" data-clear-plan="all">
+                  <span><b>全</b><strong>买入和卖出全部清除</strong></span>
+                  <small>保留目前持仓基准参数</small>
+                </button>
+              </div>
+            </div>
             <span class="live-chip"><i aria-hidden="true"></i>实时计算</span>
           </div>
         </div>
@@ -87,54 +128,59 @@
               <span>持仓基准</span>
               <small>交易前数据</small>
             </span>
-            <span class="legend-note">PRE-TRADE</span>
+            <div class="market-switch" id="marketSwitch" role="group" aria-label="选择交易市场">
+              <button type="button" class="is-active" data-market="hk" aria-pressed="true"><b>HK</b><span>港股</span></button>
+              <button type="button" data-market="us" aria-pressed="false"><b>US</b><span>美股</span></button>
+            </div>
           </legend>
 
           <div class="stock-identity-grid">
             <label class="field stock-code-field">
               <span>股票代码</span>
               <span class="input-wrap">
-                <input id="stockCode" name="stockCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="00700" autocomplete="off">
+                <input id="stockCode" name="stockCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="00700" autocomplete="off" aria-label="股票代码">
               </span>
             </label>
             <label class="field stock-name-field">
               <span>股票名称 <b>可选</b></span>
               <span class="input-wrap">
-                <input id="stockName" name="stockName" type="text" maxlength="24" placeholder="腾讯控股" autocomplete="off">
+                <input id="stockName" name="stockName" type="text" maxlength="24" placeholder="腾讯控股" autocomplete="off" aria-label="股票名称">
               </span>
             </label>
           </div>
 
-          <label class="field market-price-field primary-market-field">
-            <span class="field-title">目前股价 <b>MARKET</b></span>
-            <span class="input-wrap">
-              <input id="marketPrice" name="marketPrice" type="number" min="0" step="0.01" value="49" inputmode="decimal">
-              <small>/ 股</small>
-            </span>
-          </label>
+          <div class="position-input-grid">
+            <label class="field market-price-field primary-market-field">
+              <span class="field-title">目前股价 <b>MARKET</b></span>
+              <span class="input-wrap">
+                <input id="marketPrice" name="marketPrice" type="number" min="0" step="0.01" value="49" inputmode="decimal">
+                <small>/ 股</small>
+              </span>
+            </label>
 
-          <div class="basis-field-grid">
-            <label class="field compact-field">
-              <span>目前股数</span>
-              <span class="input-wrap">
-                <input id="currentShares" name="currentShares" type="number" min="1" step="100" value="600" inputmode="decimal">
-                <small>股</small>
-              </span>
-            </label>
-            <label class="field compact-field">
-              <span>目前成本</span>
-              <span class="input-wrap">
-                <input id="currentCost" name="currentCost" type="number" min="0" step="0.01" value="94" inputmode="decimal">
-                <small>HKD</small>
-              </span>
-            </label>
-            <label class="field compact-field">
-              <span>每手股数</span>
-              <span class="input-wrap">
-                <input id="lotSize" name="lotSize" type="number" min="1" step="1" value="100" inputmode="numeric">
-                <small>股</small>
-              </span>
-            </label>
+            <div class="basis-field-grid">
+              <label class="field compact-field">
+                <span>目前股数</span>
+                <span class="input-wrap">
+                  <input id="currentShares" name="currentShares" type="number" min="1" step="100" value="600" inputmode="decimal">
+                  <small>股</small>
+                </span>
+              </label>
+              <label class="field compact-field">
+                <span>目前成本</span>
+                <span class="input-wrap">
+                  <input id="currentCost" name="currentCost" type="number" min="0" step="0.01" value="94" inputmode="decimal">
+                  <small data-currency-code>HKD</small>
+                </span>
+              </label>
+              <label class="field compact-field" id="lotSizeField">
+                <span>每手股数</span>
+                <span class="input-wrap">
+                  <input id="lotSize" name="lotSize" type="number" min="1" step="1" value="100" inputmode="numeric">
+                  <small>股</small>
+                </span>
+              </label>
+            </div>
           </div>
         </fieldset>
 
@@ -154,10 +200,10 @@
             </div>
             <label class="input-wrap price-input">
               <input id="buyPrice" name="buyPrice" type="number" min="0" step="0.01" value="49" inputmode="decimal" aria-label="买入价格精确值">
-              <small>HKD</small>
+              <small data-currency-code>HKD</small>
             </label>
             <input id="buyPriceRange" type="range" min="0" max="200" step="0.1" value="49">
-            <div class="range-scale" aria-hidden="true"><span>HK$0</span><span>HK$200</span></div>
+            <div class="range-scale" aria-hidden="true"><span data-range-min>HK$0</span><span data-range-max>HK$200</span></div>
           </div>
 
           <div class="field-grid order-field-grid">
@@ -172,7 +218,7 @@
               <span id="buyFeeLabel">买入费用</span>
               <span class="input-wrap">
                 <input id="buyFee" name="buyFee" type="number" min="0" step="0.01" value="18.5" inputmode="decimal">
-                <small>HKD / 笔</small>
+                <small data-fee-currency>HKD / 笔</small>
               </span>
             </label>
           </div>
@@ -194,10 +240,10 @@
             </div>
             <label class="input-wrap price-input">
               <input id="sellPrice" name="sellPrice" type="number" min="0" step="0.01" value="60" inputmode="decimal" aria-label="卖出价格精确值">
-              <small>HKD</small>
+              <small data-currency-code>HKD</small>
             </label>
             <input id="sellPriceRange" type="range" min="0" max="200" step="0.1" value="60">
-            <div class="range-scale" aria-hidden="true"><span>HK$0</span><span>HK$200</span></div>
+            <div class="range-scale" aria-hidden="true"><span data-range-min>HK$0</span><span data-range-max>HK$200</span></div>
           </div>
 
           <div class="field-grid order-field-grid">
@@ -212,16 +258,21 @@
               <span id="sellFeeLabel">卖出费用</span>
               <span class="input-wrap">
                 <input id="sellFee" name="sellFee" type="number" min="0" step="0.01" value="18.5" inputmode="decimal">
-                <small>HKD / 笔</small>
+                <small data-fee-currency>HKD / 笔</small>
               </span>
             </label>
           </div>
         </fieldset>
 
         </form>
+        <button class="mobile-results-cta" id="mobileResultsButton" type="button">
+          <span>查看测算结果<small>进入第二页查看完整明细</small></span>
+          <strong id="mobileResultPreview">HK$92.23 / 股</strong>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6"/></svg>
+        </button>
       </aside>
 
-      <section class="results" aria-live="polite">
+      <section class="results" id="calculationResults" aria-live="polite">
         <div class="result-column result-main-column">
           <section class="result-hero panel">
             <div class="hero-glow" aria-hidden="true"></div>
@@ -231,7 +282,7 @@
                 <span class="calculation-badge" id="calculationBadge">已含双边费用</span>
                 <button class="info-button" id="basisInfoButton" type="button" aria-label="查看资金回本成本口径说明" aria-haspopup="dialog">?</button>
               </div>
-              <div class="hero-number"><span id="newDilutedCost">92.23</span><small>HKD / 股</small></div>
+              <div class="hero-number"><span id="newDilutedCost">92.23</span><small data-currency-per-share>HKD / 股</small></div>
               <p class="cost-change" id="costChange">较目前成本下降 HK$1.77 / 股</p>
               <p class="result-insight" id="resultInsight" hidden></p>
             </div>
@@ -301,13 +352,19 @@
               <span>买入股数不变</span>
             </div>
             <svg id="costChart" viewBox="0 0 620 240" role="img" aria-labelledby="chartTitle chartDescription">
-              <desc id="chartDescription">显示不同买入价格对应的资金回本成本，标记点代表当前买入价格。</desc>
+              <desc id="chartDescription">显示不同买入价格对应的新回本成本。灰色点表示原回本成本，蓝色点表示当前方案的新回本成本，虚线表示成本演变。</desc>
               <g id="chartGrid"></g>
               <path id="chartArea" class="chart-area"></path>
               <path id="chartLine" class="chart-line"></path>
               <line id="chartVerticalGuide" class="chart-guide"></line>
               <line id="chartHorizontalGuide" class="chart-guide"></line>
+              <line id="chartEvolutionLine" class="chart-evolution-line"></line>
+              <circle id="chartBasisPoint" class="chart-basis-point" r="5"></circle>
               <circle id="chartPoint" class="chart-point" r="6"></circle>
+              <g id="chartBasisCallout" class="chart-basis-callout" aria-hidden="true">
+                <rect id="chartBasisLabelBg" rx="6" ry="6"></rect>
+                <text id="chartBasisLabel" class="chart-basis-label"></text>
+              </g>
               <g id="chartPointCallout" class="chart-point-callout" aria-hidden="true">
                 <rect id="chartPointLabelBg" rx="6" ry="6"></rect>
                 <text id="chartPointLabel" class="chart-point-label"></text>
@@ -332,13 +389,13 @@
                 <span>目标回本成本</span>
                 <span class="input-wrap target-input-wrap">
                   <input id="targetCost" name="targetCost" form="calculatorForm" type="number" min="0.01" step="0.01" value="90" inputmode="decimal">
-                  <small>HKD / 股</small>
+                  <small data-currency-per-share>HKD / 股</small>
                 </span>
               </label>
               <div class="target-plan-copy">
                 <p id="targetPlanMessage">理论需买入 132.61 股；港股按整手交易，至少买入 2 手。</p>
                 <div class="target-plan-stats">
-                  <span>整手股数<strong id="targetPlanShares">200 股</strong></span>
+                  <span><i id="targetPlanQuantityLabel">整手股数</i><strong id="targetPlanShares">200 股</strong></span>
                   <span>预计投入<strong id="targetPlanOutlay">HK$9,818.50</strong></span>
                   <span>实际新成本<strong id="targetPlanActualCost">HK$86.05</strong></span>
                 </div>
@@ -350,10 +407,10 @@
           <section class="comparison-section panel" aria-labelledby="comparisonTitle">
             <div class="section-title-row">
               <div>
-                <p class="panel-kicker">LOT MATRIX</p>
+                <p class="panel-kicker" id="comparisonKicker">LOT MATRIX</p>
                 <h2 id="comparisonTitle">1 至 5 手买入方案</h2>
               </div>
-              <span>一笔买单计费</span>
+              <span id="comparisonMeta">整手 · 单笔计费</span>
             </div>
             <div class="table-scroll">
               <table class="comparison-table">
@@ -377,14 +434,14 @@
                 <p class="panel-kicker">PRICE / BASIS</p>
                 <h2 id="positionTitle">目前股价与回本价</h2>
               </div>
-              <span id="positionSummary">HK$49.00 / HK$92.23</span>
+              <span id="positionSummary">49.00/92.23</span>
             </div>
             <div class="position-visual">
               <div class="position-track" aria-hidden="true">
                 <div class="position-fill" id="positionFill"></div>
                 <span class="position-dot" id="positionDot"></span>
               </div>
-              <div class="position-labels"><span>HK$0</span><span id="breakEvenLabel">回本 HK$92.23</span></div>
+              <div class="position-labels"><span data-position-zero>HK$0</span><span id="breakEvenLabel">回本 HK$92.23</span></div>
             </div>
           </section>
 
@@ -447,39 +504,66 @@
       </div>
 
       <div class="auto-fee-settings" id="autoFeeSettings" hidden>
-        <div class="security-type-setting">
-          <div class="dialog-section-heading"><span>证券类型预设</span><small>用于快速切换股票印花税</small></div>
-          <div class="security-type-switch" role="radiogroup" aria-label="证券类型费用预设">
-            <label><input type="radio" name="securityType" value="stock" checked><span>普通港股</span></label>
-            <label><input type="radio" name="securityType" value="stamp-exempt"><span>印花税豁免</span></label>
-            <label><input type="radio" name="securityType" value="custom"><span>自定义</span></label>
+        <div class="market-fee-panel" id="hkAutoFeeSettings">
+          <div class="security-type-setting">
+            <div class="dialog-section-heading"><span>证券类型预设</span><small>用于快速切换股票印花税</small></div>
+            <div class="security-type-switch" role="radiogroup" aria-label="证券类型费用预设">
+              <label><input type="radio" name="securityType" value="stock" checked><span>普通港股</span></label>
+              <label><input type="radio" name="securityType" value="stamp-exempt"><span>印花税豁免</span></label>
+              <label><input type="radio" name="securityType" value="custom"><span>自定义</span></label>
+            </div>
+          </div>
+          <div class="fee-setting-grid">
+            <label class="dialog-field">
+              <span>券商佣金率</span>
+              <span class="dialog-input"><input id="commissionRate" type="number" min="0" step="0.001" value="0.03"><small>%</small></span>
+            </label>
+            <label class="dialog-field">
+              <span>每笔最低佣金</span>
+              <span class="dialog-input"><input id="minimumCommission" type="number" min="0" step="0.01" value="3"><small>HKD</small></span>
+            </label>
+          </div>
+          <div class="fee-check-grid">
+            <label><input id="includeStampDuty" type="checkbox" checked><span>计入股票印花税</span></label>
+            <label><input id="includeSettlementFee" type="checkbox" checked><span>计入交收费估算</span></label>
+          </div>
+          <div class="fee-rate-list" aria-label="港股自动费用项目">
+            <span>证监会征费 <b>0.0027%</b></span>
+            <span>会财局征费 <b>0.00015%</b></span>
+            <span>交易费 <b>0.00565%</b></span>
+            <span>交收费 <b>0.0042%</b></span>
           </div>
         </div>
-        <div class="fee-setting-grid">
-          <label class="dialog-field">
-            <span>券商佣金率</span>
-            <span class="dialog-input"><input id="commissionRate" type="number" min="0" step="0.001" value="0.03"><small>%</small></span>
-          </label>
-          <label class="dialog-field">
-            <span>每笔最低佣金</span>
-            <span class="dialog-input"><input id="minimumCommission" type="number" min="0" step="0.01" value="3"><small>HKD</small></span>
-          </label>
+
+        <div class="market-fee-panel us-fee-panel" id="usAutoFeeSettings" hidden>
+          <div class="dialog-section-heading"><span>美股费用预设</span><small>监管费用仅在卖出侧估算</small></div>
+          <div class="fee-setting-grid">
+            <label class="dialog-field">
+              <span>券商佣金率</span>
+              <span class="dialog-input"><input id="usCommissionRate" type="number" min="0" step="0.001" value="0"><small>%</small></span>
+            </label>
+            <label class="dialog-field">
+              <span>每笔最低佣金</span>
+              <span class="dialog-input"><input id="usMinimumCommission" type="number" min="0" step="0.01" value="0"><small>USD</small></span>
+            </label>
+          </div>
+          <div class="fee-check-grid">
+            <label><input id="includeSecFee" type="checkbox" checked><span>计入 SEC 交易费</span></label>
+            <label><input id="includeFinraTaf" type="checkbox" checked><span>计入 FINRA TAF</span></label>
+          </div>
+          <div class="fee-rate-list" aria-label="美股自动费用项目">
+            <span>SEC Section 31 <b>$20.60 / 百万美元</b></span>
+            <span>FINRA TAF <b>$0.000195 / 股</b></span>
+            <span>TAF 单笔上限 <b>$9.79</b></span>
+            <span>ADR 等费用 <b>手动填写</b></span>
+          </div>
         </div>
-        <div class="fee-check-grid">
-          <label><input id="includeStampDuty" type="checkbox" checked><span>计入股票印花税</span></label>
-          <label><input id="includeSettlementFee" type="checkbox" checked><span>计入交收费估算</span></label>
-        </div>
-        <div class="fee-rate-list" aria-label="自动费用项目">
-          <span>证监会征费 <b>0.0027%</b></span>
-          <span>会财局征费 <b>0.00015%</b></span>
-          <span>交易费 <b>0.00565%</b></span>
-          <span>交收费 <b>0.0042%</b></span>
-        </div>
+
         <div class="fee-preview" id="feePreview">
           <span>买入费用<strong id="autoBuyFeePreview">HK$0.00</strong></span>
           <span>卖出费用<strong id="autoSellFeePreview">HK$0.00</strong></span>
         </div>
-        <p class="dialog-note">“印花税豁免”适用于符合条件的证券（如部分 ETF）；实际收费仍以券商成交单为准。费用规则核对日期：2026-07-27。</p>
+        <p class="dialog-note" id="feeDialogNote">“印花税豁免”适用于符合条件的证券（如部分 ETF）；实际收费仍以券商成交单为准。费用规则核对日期：2026-07-28。</p>
       </div>
     </div>
     <div class="dialog-actions dialog-actions-split">
@@ -594,7 +678,7 @@
     <div class="dialog-body import-backup-dialog-body">
       <div class="import-backup-icon" aria-hidden="true">⇄</div>
       <div class="import-backup-copy">
-        <strong id="importBackupSummary">已读取 costbuddy 备份</strong>
+        <strong id="importBackupSummary">已读取 CostBuddy 备份</strong>
         <p>导入会替换此浏览器中的持仓簿、当前测算、方案和费用设置。建议先导出现在的数据作为备份。</p>
       </div>
     </div>
@@ -626,8 +710,68 @@
     </div>
   </dialog>
 
+
+  <dialog class="app-dialog support-dialog" id="supportDialog" aria-labelledby="supportDialogTitle">
+    <div class="dialog-header">
+      <div>
+        <p class="panel-kicker">SUPPORT / FEEDBACK</p>
+        <h2 id="supportDialogTitle">支持与反馈</h2>
+      </div>
+      <button class="dialog-close" type="button" data-close-dialog aria-label="关闭">×</button>
+    </div>
+    <div class="dialog-body support-dialog-body">
+      <p class="support-intro">如有功能建议或使用意见，请直接发送邮件；如果 CostBuddy 对你有帮助，也欢迎通过微信支持持续维护。</p>
+      <div class="support-grid">
+        <section class="support-card feedback-card" aria-labelledby="feedbackCardTitle">
+          <div class="support-card-heading">
+            <span class="support-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><rect x="2.7" y="4.2" width="14.6" height="11.6" rx="2.2"/><path d="m4 6 6 4.8L16 6"/></svg>
+            </span>
+            <div>
+              <strong id="feedbackCardTitle">邮箱提意见</strong>
+              <small>FEEDBACK BY EMAIL</small>
+            </div>
+          </div>
+          <div class="support-contact-line support-email-contact">
+            <span>意见邮箱</span>
+            <div class="support-email-actions">
+              <a class="support-email-link" href="mailto:imurio@163.com?subject=CostBuddy%20%E4%BD%BF%E7%94%A8%E5%BB%BA%E8%AE%AE">imurio@163.com</a>
+              <button class="support-copy-button" id="copyFeedbackEmailButton" type="button" aria-label="复制意见邮箱">复制邮箱</button>
+            </div>
+          </div>
+          <p class="feedback-direct-note">如果你有功能建议或使用意见，直接发送邮件给我即可。</p>
+        </section>
+
+        <section class="support-card reward-card" aria-labelledby="rewardCardTitle">
+          <div class="support-card-heading">
+            <span class="support-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><path d="M10 16.4S3.3 12.2 3.3 7.6A3.6 3.6 0 0 1 10 5.7a3.6 3.6 0 0 1 6.7 1.9c0 4.6-6.7 8.8-6.7 8.8Z"/></svg>
+            </span>
+            <div>
+              <strong id="rewardCardTitle">微信打赏</strong>
+              <small>TIP VIA WECHAT</small>
+            </div>
+          </div>
+          <div class="support-contact-line">
+            <span>微信号</span>
+            <strong>idemising</strong>
+          </div>
+          <p class="reward-copy">打开微信搜索微信号并添加，备注“CostBuddy”即可联系并支持项目持续维护。</p>
+          <div class="support-actions support-actions-single">
+            <button class="dialog-primary reward-copy-button" id="copyWechatButton" type="button">复制微信号</button>
+          </div>
+          <p class="support-privacy">感谢你的认可，支持完全自愿，不影响任何功能使用。</p>
+        </section>
+      </div>
+    </div>
+    <div class="dialog-actions dialog-actions-split support-dialog-footer">
+      <span>意见邮箱：imurio@163.com</span>
+      <button class="dialog-primary" type="button" data-close-dialog>完成</button>
+    </div>
+  </dialog>
+
   <div class="copy-toast" id="copyToast" role="status" aria-live="polite" hidden>测算结果已复制</div>
 
-  <script src="calculator.js?v=20260728-17"></script>
+  <script src="calculator.js?v=20260728-32"></script>
 </body>
 </html>

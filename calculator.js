@@ -5,11 +5,13 @@
   var SCENARIO_STORAGE_KEY = "hk-diluted-cost-calculator-scenarios-v1";
   var HOLDINGS_STORAGE_KEY = "hk-diluted-cost-calculator-holdings-v1";
   var CURRENT_HOLDING_STORAGE_KEY = "hk-diluted-cost-calculator-current-holding-v1";
+  var THEME_STORAGE_KEY = "costbuddy-theme-v1";
   var BACKUP_FORMAT = "costbuddy-backup";
-  var BACKUP_VERSION = 1;
+  var BACKUP_VERSION = 2;
   var MAX_BACKUP_FILE_SIZE = 2 * 1024 * 1024;
   var WORKSPACE_MIN_WIDTH = 1040;
-  var WORKSPACE_MIN_HEIGHT = 720;
+  var WORKSPACE_MIN_HEIGHT = 660;
+  var MOBILE_LAYOUT_QUERY = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
   var SHARE_FIELDS = {
     currentShares: "cs",
     currentCost: "cc",
@@ -31,19 +33,59 @@
     stockCode: "",
     stockName: ""
   };
-  var DEFAULTS = {
-    currentShares: 600,
-    currentCost: 94,
-    marketPrice: 49,
-    lotSize: 100,
-    sellShares: 100,
-    sellPrice: 60,
-    sellFee: 18.5,
-    buyShares: 100,
-    buyPrice: 49,
-    buyFee: 18.5,
-    targetCost: 90
+  var MARKET_CONFIGS = {
+    hk: {
+      code: "hk",
+      name: "港股",
+      shortName: "HK",
+      currency: "HKD",
+      symbol: "HK$",
+      locale: "zh-HK",
+      quantityMode: "lot",
+      quantityStep: 100,
+      rangeMax: 200,
+      planQuantities: [1, 2, 3, 4, 5],
+      defaults: {
+        currentShares: 600,
+        currentCost: 94,
+        marketPrice: 49,
+        lotSize: 100,
+        sellShares: 100,
+        sellPrice: 60,
+        sellFee: 18.5,
+        buyShares: 100,
+        buyPrice: 49,
+        buyFee: 18.5,
+        targetCost: 90
+      }
+    },
+    us: {
+      code: "us",
+      name: "美股",
+      shortName: "US",
+      currency: "USD",
+      symbol: "$",
+      locale: "en-US",
+      quantityMode: "share",
+      quantityStep: 1,
+      rangeMax: 500,
+      planQuantities: [1, 5, 10, 25, 50],
+      defaults: {
+        currentShares: 100,
+        currentCost: 185.2,
+        marketPrice: 172.6,
+        lotSize: 1,
+        sellShares: 10,
+        sellPrice: 190,
+        sellFee: 0.02,
+        buyShares: 20,
+        buyPrice: 165,
+        buyFee: 0,
+        targetCost: 178
+      }
+    }
   };
+  var DEFAULTS = Object.assign({}, MARKET_CONFIGS.hk.defaults);
   var DEFAULT_FEE_SETTINGS = {
     mode: "manual",
     securityType: "stock",
@@ -51,27 +93,45 @@
     minimumCommission: 3,
     includeStampDuty: true,
     includeSettlementFee: true,
+    includeSecFee: false,
+    includeFinraTaf: false,
+    secRatePerMillion: 20.6,
+    finraTafRate: 0.000195,
+    finraTafMax: 9.79,
     manualSellFee: 18.5,
     manualBuyFee: 18.5
   };
-  var NEW_MEASUREMENT_VALUES = {
-    currentShares: 0,
-    currentCost: 0,
-    marketPrice: 0,
-    lotSize: 100,
-    sellShares: 0,
-    sellPrice: 0,
-    sellFee: 0,
-    buyShares: 0,
-    buyPrice: 0,
-    buyFee: 0,
-    targetCost: 0,
-    stockCode: "",
-    stockName: ""
+  var US_DEFAULT_FEE_SETTINGS = {
+    mode: "manual",
+    securityType: "us-stock",
+    commissionRate: 0,
+    minimumCommission: 0,
+    includeStampDuty: false,
+    includeSettlementFee: false,
+    includeSecFee: true,
+    includeFinraTaf: true,
+    secRatePerMillion: 20.6,
+    finraTafRate: 0.000195,
+    finraTafMax: 9.79,
+    manualSellFee: 0.02,
+    manualBuyFee: 0
   };
+  var currentMarket = "hk";
+  var lastHkLotSize = MARKET_CONFIGS.hk.quantityStep;
 
   var form = document.getElementById("calculatorForm");
   var resetButton = document.getElementById("resetButton");
+  var themeToggleButton = document.getElementById("themeToggleButton");
+  var themeToggleLabel = document.getElementById("themeToggleLabel");
+  var supportFeedbackButton = document.getElementById("supportFeedbackButton");
+  var supportDialog = document.getElementById("supportDialog");
+  var copyFeedbackEmailButton = document.getElementById("copyFeedbackEmailButton");
+  var copyWechatButton = document.getElementById("copyWechatButton");
+  var themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  var clearPlanButton = document.getElementById("clearPlanButton");
+  var clearPlanMenu = document.getElementById("clearPlanMenu");
+  var mobilePageButtons = document.querySelectorAll("[data-mobile-page-target]");
+  var mobileResultsButton = document.getElementById("mobileResultsButton");
   var sellRange = document.getElementById("sellPriceRange");
   var buyRange = document.getElementById("buyPriceRange");
   var sellPriceInput = document.getElementById("sellPrice");
@@ -101,7 +161,7 @@
   var importBackupButton = document.getElementById("importBackupButton");
   var backupFileInput = document.getElementById("backupFileInput");
   var importBackupDialog = document.getElementById("importBackupDialog");
-  var feeSettings = Object.assign({}, DEFAULT_FEE_SETTINGS);
+  var feeSettings = defaultFeeSettings(currentMarket);
   var latestTargetPlan = null;
   var latestInput = null;
   var latestResult = null;
@@ -116,18 +176,79 @@
   var pendingDeleteId = null;
   var pendingImportBackup = null;
 
+
   function element(id) {
     return document.getElementById(id);
   }
 
+  function applyTheme(theme, persist) {
+    var isDark = theme === "dark";
+    document.documentElement.dataset.theme = isDark ? "dark" : "light";
+    themeToggleButton.setAttribute("aria-pressed", isDark ? "true" : "false");
+    themeToggleButton.setAttribute("aria-label", isDark ? "切换到日间模式" : "切换到夜间模式");
+    themeToggleButton.title = isDark ? "切换到日间模式" : "切换到夜间模式";
+    themeToggleLabel.textContent = isDark ? "日间" : "夜间";
+    themeColorMeta.setAttribute("content", isDark ? "#0f1419" : "#f5f6fb");
+    if (persist) {
+      try { localStorage.setItem(THEME_STORAGE_KEY, isDark ? "dark" : "light"); } catch (error) {}
+    }
+  }
+
+  function normalizeMarket(value) {
+    return value === "us" ? "us" : "hk";
+  }
+
+  function marketConfig(market) {
+    return MARKET_CONFIGS[normalizeMarket(market || currentMarket)];
+  }
+
+  function marketDefaults(market, empty) {
+    var config = marketConfig(market);
+    if (!empty) {
+      return Object.assign({}, config.defaults, { market: config.code });
+    }
+    return {
+      market: config.code,
+      currentShares: 0,
+      currentCost: 0,
+      marketPrice: 0,
+      lotSize: config.quantityStep,
+      sellShares: 0,
+      sellPrice: 0,
+      sellFee: 0,
+      buyShares: 0,
+      buyPrice: 0,
+      buyFee: 0,
+      targetCost: 0,
+      stockCode: "",
+      stockName: ""
+    };
+  }
+
+  function defaultFeeSettings(market) {
+    return Object.assign(
+      {},
+      normalizeMarket(market) === "us" ? US_DEFAULT_FEE_SETTINGS : DEFAULT_FEE_SETTINGS
+    );
+  }
   function fitWorkspaceToWindow() {
     var viewportWidth = Math.max(1, window.innerWidth || document.documentElement.clientWidth || WORKSPACE_MIN_WIDTH);
     var viewportHeight = Math.max(1, window.innerHeight || document.documentElement.clientHeight || WORKSPACE_MIN_HEIGHT);
+    var usesMobileLayout = window.matchMedia && window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
+    var rootStyle = document.documentElement.style;
+
+    if (usesMobileLayout) {
+      rootStyle.setProperty("--workspace-scale", "1");
+      rootStyle.setProperty("--workspace-width", "100vw");
+      rootStyle.setProperty("--workspace-height", "auto");
+      document.body.classList.remove("is-window-fitted");
+      return;
+    }
+
     var scale = Math.min(1, viewportWidth / WORKSPACE_MIN_WIDTH, viewportHeight / WORKSPACE_MIN_HEIGHT);
     var shouldFit = scale < 0.9995;
     var workspaceWidth = shouldFit ? viewportWidth / scale : viewportWidth;
     var workspaceHeight = shouldFit ? viewportHeight / scale : viewportHeight;
-    var rootStyle = document.documentElement.style;
 
     rootStyle.setProperty("--workspace-scale", scale.toFixed(5));
     rootStyle.setProperty("--workspace-width", workspaceWidth.toFixed(2) + "px");
@@ -146,6 +267,23 @@
     });
   }
 
+  function setMobilePage(page, shouldScroll) {
+    var nextPage = page === "results" ? "results" : "ticket";
+    document.body.setAttribute("data-mobile-page", nextPage);
+    if (nextPage === "results" && clearPlanMenu && !clearPlanMenu.hidden) {
+      setClearPlanMenuOpen(false);
+    }
+    mobilePageButtons.forEach(function (button) {
+      var isActive = button.dataset.mobilePageTarget === nextPage;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+    if (shouldScroll) {
+      var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+    }
+  }
+
   function numberValue(id) {
     var parsed = Number(element(id).value);
     return Number.isFinite(parsed) ? parsed : 0;
@@ -155,16 +293,25 @@
     return String(element(id).value || "").trim();
   }
 
-  function normalizedStockCode(value) {
-    var code = String(value || "").trim().toUpperCase().replace(/\s+/g, "");
-    return /^\d{1,5}$/.test(code) ? code.padStart(5, "0") : code.slice(0, 5);
-  }
 
+  function normalizedStockCode(value, market) {
+    var code = String(value || "").trim().toUpperCase().replace(/\s+/g, "");
+    if (normalizeMarket(market || currentMarket) === "us") {
+      return code.replace(/[^A-Z0-9.-]/g, "").slice(0, 10);
+    }
+    return /^\d{1,5}$/.test(code)
+      ? code.padStart(5, "0")
+      : code.replace(/\D/g, "").slice(0, 5);
+  }
   function stockLabel(input) {
     return [input.stockCode, input.stockName].filter(Boolean).join(" ");
   }
 
-  function securityTypeLabel(type, shortLabel) {
+
+  function securityTypeLabel(type, shortLabel, market) {
+    if (normalizeMarket(market || currentMarket) === "us") {
+      return shortLabel ? "美股" : "美股 · 券商与监管费用";
+    }
     if (type === "stamp-exempt") {
       return shortLabel ? "豁免" : "印花税豁免证券";
     }
@@ -174,21 +321,22 @@
     return shortLabel ? "港股" : "普通港股";
   }
 
-  function formatNumber(value, digits) {
-    return Math.abs(value).toLocaleString("zh-HK", {
+  function formatNumber(value, digits, market) {
+    return Math.abs(value).toLocaleString(marketConfig(market).locale, {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits
     });
   }
 
-  function formatMoney(value) {
-    return (value < 0 ? "−" : "") + "HK$" + formatNumber(value, 2);
+  function formatMoney(value, market) {
+    var config = marketConfig(market);
+    return (value < 0 ? "−" : "") + config.symbol + formatNumber(value, 2, config.code);
   }
 
-  function formatSignedMoney(value) {
-    return (value >= 0 ? "+" : "−") + "HK$" + formatNumber(value, 2);
+  function formatSignedMoney(value, market) {
+    var config = marketConfig(market);
+    return (value >= 0 ? "+" : "−") + config.symbol + formatNumber(value, 2, config.code);
   }
-
   function compactNumber(value) {
     return Number(value.toFixed(2)).toString();
   }
@@ -197,25 +345,50 @@
     return Math.round((value + Number.EPSILON) * 100) / 100;
   }
 
-  function calculateEstimatedFee(shares, price, settings) {
+
+  function calculateEstimatedFee(shares, price, settings, side, market) {
+    var activeMarket = normalizeMarket(market || currentMarket);
     var turnover = Math.max(0, shares) * Math.max(0, price);
+    var emptyFee = {
+      turnover: 0,
+      commission: 0,
+      stampDuty: 0,
+      transactionLevy: 0,
+      afrcLevy: 0,
+      tradingFee: 0,
+      settlementFee: 0,
+      secFee: 0,
+      finraTaf: 0,
+      total: 0
+    };
     if (turnover <= 0) {
-      return {
-        turnover: 0,
-        commission: 0,
-        stampDuty: 0,
-        transactionLevy: 0,
-        afrcLevy: 0,
-        tradingFee: 0,
-        settlementFee: 0,
-        total: 0
-      };
+      return emptyFee;
     }
 
     var commission = Math.max(
       turnover * Math.max(0, settings.commissionRate) / 100,
       Math.max(0, settings.minimumCommission)
     );
+
+    if (activeMarket === "us") {
+      var secFee = side === "sell" && settings.includeSecFee
+        ? roundCurrency(turnover * Math.max(0, settings.secRatePerMillion) / 1000000)
+        : 0;
+      var finraTaf = side === "sell" && settings.includeFinraTaf
+        ? roundCurrency(Math.min(
+          Math.max(0, shares) * Math.max(0, settings.finraTafRate),
+          Math.max(0, settings.finraTafMax)
+        ))
+        : 0;
+      return Object.assign({}, emptyFee, {
+        turnover: turnover,
+        commission: roundCurrency(commission),
+        secFee: secFee,
+        finraTaf: finraTaf,
+        total: roundCurrency(commission + secFee + finraTaf)
+      });
+    }
+
     var stampDuty = settings.includeStampDuty ? Math.ceil(turnover * 0.001) : 0;
     var transactionLevy = roundCurrency(turnover * 0.000027);
     var afrcLevy = roundCurrency(turnover * 0.0000015);
@@ -223,11 +396,7 @@
     var settlementFee = settings.includeSettlementFee
       ? roundCurrency(turnover * 0.000042)
       : 0;
-    var total = roundCurrency(
-      commission + stampDuty + transactionLevy + afrcLevy + tradingFee + settlementFee
-    );
-
-    return {
+    return Object.assign({}, emptyFee, {
       turnover: turnover,
       commission: roundCurrency(commission),
       stampDuty: stampDuty,
@@ -235,13 +404,15 @@
       afrcLevy: afrcLevy,
       tradingFee: tradingFee,
       settlementFee: settlementFee,
-      total: total
-    };
+      total: roundCurrency(
+        commission + stampDuty + transactionLevy + afrcLevy + tradingFee + settlementFee
+      )
+    });
   }
 
   function getBuyFeeFor(input, shares, price) {
     return input.feeMode === "auto"
-      ? calculateEstimatedFee(shares, price, input.feeSettings).total
+      ? calculateEstimatedFee(shares, price, input.feeSettings, "buy", input.market).total
       : input.buyFee;
   }
 
@@ -251,7 +422,9 @@
       feeInput.readOnly = isAuto;
       feeInput.closest(".input-wrap").classList.toggle("is-auto-fee", isAuto);
     });
-    setText("feeModeLabel", isAuto ? "自动·" + securityTypeLabel(feeSettings.securityType, true) : "手动");
+    setText("feeModeLabel", isAuto
+      ? "自动·" + securityTypeLabel(feeSettings.securityType, true, currentMarket)
+      : "手动");
     setText("buyFeeLabel", isAuto ? "买入费用 · 自动" : "买入费用");
     setText("sellFeeLabel", isAuto ? "卖出费用 · 自动" : "卖出费用");
     feeSettingsButton.classList.toggle("is-auto", isAuto);
@@ -259,10 +432,11 @@
 
   function getInputs() {
     var input = {
+      market: currentMarket,
       currentShares: numberValue("currentShares"),
       currentCost: numberValue("currentCost"),
       marketPrice: numberValue("marketPrice"),
-      lotSize: numberValue("lotSize"),
+      lotSize: currentMarket === "us" ? 1 : numberValue("lotSize"),
       sellShares: numberValue("sellShares"),
       sellPrice: numberValue("sellPrice"),
       sellFee: numberValue("sellFee"),
@@ -270,15 +444,19 @@
       buyPrice: numberValue("buyPrice"),
       buyFee: numberValue("buyFee"),
       targetCost: numberValue("targetCost"),
-      stockCode: normalizedStockCode(textValue("stockCode")),
+      stockCode: normalizedStockCode(textValue("stockCode"), currentMarket),
       stockName: textValue("stockName"),
       feeMode: feeSettings.mode,
       feeSettings: Object.assign({}, feeSettings)
     };
 
     if (feeSettings.mode === "auto") {
-      input.sellFee = calculateEstimatedFee(input.sellShares, input.sellPrice, feeSettings).total;
-      input.buyFee = calculateEstimatedFee(input.buyShares, input.buyPrice, feeSettings).total;
+      input.sellFee = calculateEstimatedFee(
+        input.sellShares, input.sellPrice, feeSettings, "sell", currentMarket
+      ).total;
+      input.buyFee = calculateEstimatedFee(
+        input.buyShares, input.buyPrice, feeSettings, "buy", currentMarket
+      ).total;
       element("sellFee").value = input.sellFee.toFixed(2);
       element("buyFee").value = input.buyFee.toFixed(2);
     } else {
@@ -291,6 +469,7 @@
   }
 
   function calculateCosts(input) {
+    var activeMarket = normalizeMarket(input.market);
     var nonNegativeFields = [
       input.currentCost,
       input.marketPrice,
@@ -305,12 +484,15 @@
     if (input.currentShares <= 0) {
       return { error: "目前股数必须大于 0。" };
     }
-    if (input.lotSize <= 0) {
+    if (activeMarket === "hk" && input.lotSize <= 0) {
       return { error: "每手股数必须大于 0。" };
     }
     if (!Number.isInteger(input.currentShares) || !Number.isInteger(input.sellShares)
-      || !Number.isInteger(input.buyShares) || !Number.isInteger(input.lotSize)) {
-      return { error: "股数和每手股数请填写整数。" };
+      || !Number.isInteger(input.buyShares)) {
+      return { error: "买入、卖出和目前股数请填写整数。" };
+    }
+    if (activeMarket === "hk" && !Number.isInteger(input.lotSize)) {
+      return { error: "每手股数请填写整数。" };
     }
     if (nonNegativeFields.some(function (value) { return value < 0; })) {
       return { error: "成本、股价、股数和手续费不能为负数。" };
@@ -341,6 +523,7 @@
       : null;
 
     return {
+      market: activeMarket,
       remainingShares: remainingShares,
       finalShares: finalShares,
       originalBasis: originalBasis,
@@ -363,6 +546,7 @@
 
   function calculateTargetPlan(input, result) {
     var target = input.targetCost;
+    var activeMarket = normalizeMarket(input.market);
 
     if (target <= 0) {
       return { status: "invalid", message: "目标成本必须大于 0。" };
@@ -371,7 +555,7 @@
     if (result.remainingShares > 0 && result.afterSellCost <= target) {
       return {
         status: "none",
-        message: "卖出后的成本已是 " + formatMoney(result.afterSellCost) + "，无需加仓即可达到目标。"
+        message: "卖出后的成本已是 " + formatMoney(result.afterSellCost, activeMarket) + "，无需加仓即可达到目标。"
       };
     }
 
@@ -385,7 +569,7 @@
     var theoreticalShares;
     if (input.feeMode === "auto") {
       var low = 0;
-      var high = Math.max(1, input.lotSize);
+      var high = Math.max(1, activeMarket === "hk" ? input.lotSize : 1);
       var estimatedCost = function (shares) {
         var fee = getBuyFeeFor(input, shares, input.buyPrice);
         return (result.basisAfterSale + shares * input.buyPrice + fee)
@@ -417,49 +601,151 @@
     }
 
     var wholeShares = Math.max(1, Math.ceil(theoreticalShares - 1e-9));
-    var lotShares = Math.ceil(wholeShares / input.lotSize) * input.lotSize;
-    var lots = lotShares / input.lotSize;
+    var lotShares = activeMarket === "hk"
+      ? Math.ceil(wholeShares / input.lotSize) * input.lotSize
+      : wholeShares;
+    var units = activeMarket === "hk" ? lotShares / input.lotSize : lotShares;
     var planBuyFee = getBuyFeeFor(input, lotShares, input.buyPrice);
     var outlay = lotShares * input.buyPrice + planBuyFee;
     var finalShares = result.remainingShares + lotShares;
     var actualCost = (result.basisAfterSale + outlay) / finalShares;
+    var message = activeMarket === "hk"
+      ? "理论需买入 " + formatNumber(theoreticalShares, 2, activeMarket)
+        + " 股；按 " + formatNumber(input.lotSize, 0, activeMarket) + " 股一手，至少买入 "
+        + formatNumber(units, 0, activeMarket) + " 手。"
+      : "理论需买入 " + formatNumber(theoreticalShares, 2, activeMarket)
+        + " 股；按整股交易，至少买入 " + formatNumber(lotShares, 0, activeMarket) + " 股。";
 
     return {
       status: "needed",
       theoreticalShares: theoreticalShares,
       lotShares: lotShares,
-      lots: lots,
+      lots: units,
+      units: units,
       outlay: outlay,
       actualCost: actualCost,
-      message: "理论需买入 " + formatNumber(theoreticalShares, 2)
-        + " 股；按 " + formatNumber(input.lotSize, 0) + " 股一手，至少买入 "
-        + formatNumber(lots, 0) + " 手。"
+      message: message
     };
   }
 
   function calculateLotPlans(input, result) {
-    var plans = [];
-    var lots;
-
-    for (lots = 1; lots <= 5; lots += 1) {
-      var shares = lots * input.lotSize;
+    var activeMarket = normalizeMarket(input.market);
+    return marketConfig(activeMarket).planQuantities.map(function (quantity) {
+      var shares = activeMarket === "hk" ? quantity * input.lotSize : quantity;
       var planBuyFee = getBuyFeeFor(input, shares, input.buyPrice);
       var outlay = shares * input.buyPrice + planBuyFee;
       var finalShares = result.remainingShares + shares;
-      plans.push({
-        lots: lots,
+      return {
+        lots: quantity,
+        quantity: quantity,
         shares: shares,
         outlay: outlay,
         actualCost: (result.basisAfterSale + outlay) / finalShares
-      });
-    }
-    return plans;
+      };
+    });
   }
 
   function setText(id, text) {
     element(id).textContent = text;
   }
 
+  function applyMarketPresentation() {
+    var config = marketConfig(currentMarket);
+    var isUs = currentMarket === "us";
+    document.body.dataset.market = currentMarket;
+    document.documentElement.style.setProperty("--currency-symbol", '"' + config.symbol + '"');
+
+    document.querySelectorAll("#marketSwitch button[data-market]").forEach(function (button) {
+      var active = button.dataset.market === currentMarket;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    document.querySelectorAll("[data-currency-code]").forEach(function (node) {
+      node.textContent = config.currency;
+    });
+    document.querySelectorAll("[data-fee-currency]").forEach(function (node) {
+      node.textContent = config.currency + " / 笔";
+    });
+    document.querySelectorAll("[data-currency-per-share]").forEach(function (node) {
+      node.textContent = config.currency + " / 股";
+    });
+    document.querySelectorAll("[data-range-min]").forEach(function (node) {
+      node.textContent = config.symbol + "0";
+    });
+    document.querySelectorAll("[data-range-max]").forEach(function (node) {
+      node.textContent = config.symbol + config.rangeMax;
+    });
+    document.querySelectorAll("[data-position-zero]").forEach(function (node) {
+      node.textContent = config.symbol + "0";
+    });
+
+    var stockCodeInput = element("stockCode");
+    stockCodeInput.placeholder = isUs ? "AAPL" : "00700";
+    stockCodeInput.maxLength = isUs ? 10 : 5;
+    stockCodeInput.inputMode = isUs ? "text" : "numeric";
+    stockCodeInput.pattern = isUs ? "[A-Za-z0-9.-]*" : "[0-9]*";
+    element("stockName").placeholder = isUs ? "Apple" : "腾讯控股";
+    element("lotSizeField").hidden = isUs;
+    element("lotSize").value = isUs ? 1 : element("lotSize").value;
+
+    ["currentShares", "buyShares", "sellShares"].forEach(function (id) {
+      element(id).step = String(config.quantityStep);
+    });
+    [sellRange, buyRange].forEach(function (range) {
+      range.max = String(config.rangeMax);
+    });
+
+    setText("comparisonKicker", isUs ? "SHARE MATRIX" : "LOT MATRIX");
+    setText("comparisonTitle", isUs ? "1 / 5 / 10 / 25 / 50 股方案" : "1 至 5 手买入方案");
+    setText("comparisonMeta", isUs ? "整股 · 单笔计费" : "整手 · 单笔计费");
+    setText("targetPlanQuantityLabel", isUs ? "整股数量" : "整手股数");
+    setText("feeDialogTitle", config.name + "交易费用设置");
+    setText("feeDialogNote", isUs
+      ? "SEC 与 FINRA 费用仅在卖出侧估算；ADR、平台费及券商舍入方式可能不同，实际以成交单为准。规则核对日期：2026-07-28。"
+      : "“印花税豁免”适用于符合条件的证券（如部分 ETF）；实际收费仍以券商成交单为准。费用规则核对日期：2026-07-28。");
+    setFeeInputPresentation(feeSettings.mode === "auto");
+  }
+
+  function switchMarket(nextMarket) {
+    var next = normalizeMarket(nextMarket);
+    if (next === currentMarket) {
+      return;
+    }
+    var previous = currentMarket;
+    var previousDefaults = marketDefaults(previous, false);
+    var isUntouchedExample = !textValue("stockCode") && !textValue("stockName")
+      && Object.keys(DEFAULTS).every(function (key) {
+        return Math.abs(numberValue(key) - Number(previousDefaults[key])) < 0.000001;
+      });
+    var previousLotSize = numberValue("lotSize");
+    if (previous === "hk" && previousLotSize > 0) {
+      lastHkLotSize = previousLotSize;
+    }
+    currentMarket = next;
+    feeSettings = defaultFeeSettings(currentMarket);
+
+    if (isUntouchedExample) {
+      var nextDefaults = marketDefaults(currentMarket, false);
+      Object.keys(DEFAULTS).forEach(function (key) {
+        element(key).value = nextDefaults[key];
+      });
+      element("stockCode").value = "";
+      element("stockName").value = "";
+    } else {
+      element("lotSize").value = currentMarket === "hk"
+        ? lastHkLotSize
+        : MARKET_CONFIGS.us.quantityStep;
+      element("sellFee").value = feeSettings.manualSellFee;
+      element("buyFee").value = feeSettings.manualBuyFee;
+    }
+
+    element("stockCode").value = normalizedStockCode(element("stockCode").value, currentMarket);
+    applyMarketPresentation();
+    syncRangeFromNumber(sellRange, sellPriceInput);
+    syncRangeFromNumber(buyRange, buyPriceInput);
+    update();
+    showCopyToast("已切换至" + marketConfig(currentMarket).name, false);
+  }
   function updatePricePosition(input, result) {
     var ratio;
     if (result.newDilutedCost <= 0) {
@@ -471,7 +757,10 @@
 
     element("positionFill").style.width = ratio.toFixed(2) + "%";
     element("positionDot").style.left = ratio.toFixed(2) + "%";
-    setText("positionSummary", formatMoney(input.marketPrice) + " / " + formatMoney(result.newDilutedCost));
+    setText(
+      "positionSummary",
+      formatNumber(input.marketPrice, 2, input.market) + "/" + formatNumber(result.newDilutedCost, 2, input.market)
+    );
     setText("breakEvenLabel", "回本 " + formatMoney(result.newDilutedCost));
   }
 
@@ -486,19 +775,23 @@
     setText("afterBuyStageShares", formatNumber(result.finalShares, 0) + " 股");
   }
 
+
   function renderTargetPlan(input, result) {
     var plan = calculateTargetPlan(input, result);
+    var isUs = normalizeMarket(input.market) === "us";
     latestTargetPlan = plan.status === "needed" ? plan : null;
 
-    setText("targetPlanBadge", "目标 " + formatMoney(input.targetCost));
+    setText("targetPlanBadge", "目标 " + formatMoney(input.targetCost, input.market));
     setText("targetPlanMessage", plan.message);
     element("targetPlanBody").className = "target-plan-body target-plan-" + plan.status;
 
     if (plan.status === "needed") {
-      setText("targetPlanShares", formatNumber(plan.lotShares, 0) + " 股");
-      setText("targetPlanOutlay", formatMoney(plan.outlay));
-      setText("targetPlanActualCost", formatMoney(plan.actualCost));
-      applyTargetPlanButton.textContent = "应用 " + formatNumber(plan.lots, 0) + " 手方案";
+      setText("targetPlanShares", formatNumber(plan.lotShares, 0, input.market) + " 股");
+      setText("targetPlanOutlay", formatMoney(plan.outlay, input.market));
+      setText("targetPlanActualCost", formatMoney(plan.actualCost, input.market));
+      applyTargetPlanButton.textContent = isUs
+        ? "应用 " + formatNumber(plan.lotShares, 0, input.market) + " 股方案"
+        : "应用 " + formatNumber(plan.lots, 0, input.market) + " 手方案";
       applyTargetPlanButton.hidden = false;
       applyTargetPlanButton.disabled = false;
       return;
@@ -510,21 +803,23 @@
     applyTargetPlanButton.hidden = true;
     applyTargetPlanButton.disabled = true;
   }
-
   function createCell(text) {
     var cell = document.createElement("td");
     cell.textContent = text;
     return cell;
   }
 
+
   function renderPlanComparison(input, result) {
     var plans = calculateLotPlans(input, result);
+    var isUs = normalizeMarket(input.market) === "us";
     comparisonBody.replaceChildren();
 
     plans.forEach(function (plan) {
       var row = document.createElement("tr");
       var isSelected = Math.abs(input.buyShares - plan.shares) < 1e-9;
-      var planCell = createCell(plan.lots + " 手");
+      var planLabel = formatNumber(plan.quantity, 0, input.market) + (isUs ? " 股" : " 手");
+      var planCell = createCell(planLabel);
       var actionCell = document.createElement("td");
       var actionButton = document.createElement("button");
 
@@ -541,18 +836,17 @@
       actionButton.dataset.shares = String(plan.shares);
       actionButton.textContent = isSelected ? "已选" : "选用";
       actionButton.disabled = isSelected;
-      actionButton.setAttribute("aria-label", "选用 " + plan.lots + " 手买入方案");
+      actionButton.setAttribute("aria-label", "选用 " + planLabel + "买入方案");
       actionCell.appendChild(actionButton);
 
       row.appendChild(planCell);
-      row.appendChild(createCell(formatNumber(plan.shares, 0) + " 股"));
-      row.appendChild(createCell(formatMoney(plan.outlay)));
-      row.appendChild(createCell(formatMoney(plan.actualCost)));
+      row.appendChild(createCell(formatNumber(plan.shares, 0, input.market) + " 股"));
+      row.appendChild(createCell(formatMoney(plan.outlay, input.market)));
+      row.appendChild(createCell(formatMoney(plan.actualCost, input.market)));
       row.appendChild(actionCell);
       comparisonBody.appendChild(row);
     });
   }
-
   function renderUnavailable(isEmptyState) {
     latestTargetPlan = null;
     element("resultInsight").hidden = true;
@@ -583,7 +877,10 @@
     element("chartArea").setAttribute("d", "");
     element("chartVerticalGuide").setAttribute("visibility", "hidden");
     element("chartHorizontalGuide").setAttribute("visibility", "hidden");
+    element("chartEvolutionLine").setAttribute("visibility", "hidden");
+    element("chartBasisPoint").setAttribute("visibility", "hidden");
     element("chartPoint").setAttribute("visibility", "hidden");
+    element("chartBasisCallout").setAttribute("visibility", "hidden");
     element("chartPointCallout").setAttribute("visibility", "hidden");
     setText("targetPlanBadge", "目标 —");
     setText("targetPlanMessage", isEmptyState ? "填写左侧参数后开始测算。" : "请先修正输入内容。");
@@ -609,10 +906,13 @@
   function drawChart(input, result) {
     var width = 620;
     var height = 240;
-    var padding = { left: 54, right: 18, top: 28, bottom: 34 };
+    var padding = { left: 54, right: 18, top: 44, bottom: 34 };
     element("chartVerticalGuide").removeAttribute("visibility");
     element("chartHorizontalGuide").removeAttribute("visibility");
+    element("chartEvolutionLine").removeAttribute("visibility");
+    element("chartBasisPoint").removeAttribute("visibility");
     element("chartPoint").removeAttribute("visibility");
+    element("chartBasisCallout").removeAttribute("visibility");
     element("chartPointCallout").removeAttribute("visibility");
     var plotWidth = width - padding.left - padding.right;
     var plotHeight = height - padding.top - padding.bottom;
@@ -632,6 +932,7 @@
 
     var costs = points.map(function (point) { return point.cost; });
     costs.push(result.newDilutedCost);
+    costs.push(input.currentCost);
     var yMin = Math.min.apply(null, costs);
     var yMax = Math.max.apply(null, costs);
     var yPadding = Math.max(1, (yMax - yMin) * 0.25);
@@ -686,46 +987,56 @@
         y: height - 9,
         "text-anchor": "middle",
         "class": "chart-axis-label"
-      }, "HK$" + tick.toFixed(0)));
+      }, marketConfig(input.market).symbol + tick.toFixed(0)));
     });
 
     var pointX = x(Math.max(xMin, Math.min(xMax, input.buyPrice)));
     var pointY = y(result.newDilutedCost);
+    var basisPointY = y(input.currentCost);
     var verticalGuide = element("chartVerticalGuide");
     var horizontalGuide = element("chartHorizontalGuide");
+    var evolutionLine = element("chartEvolutionLine");
     verticalGuide.setAttribute("x1", pointX);
     verticalGuide.setAttribute("x2", pointX);
-    verticalGuide.setAttribute("y1", pointY);
+    verticalGuide.setAttribute("y1", Math.min(pointY, basisPointY));
     verticalGuide.setAttribute("y2", padding.top + plotHeight);
     horizontalGuide.setAttribute("x1", padding.left);
     horizontalGuide.setAttribute("x2", pointX);
     horizontalGuide.setAttribute("y1", pointY);
     horizontalGuide.setAttribute("y2", pointY);
+    evolutionLine.setAttribute("x1", pointX);
+    evolutionLine.setAttribute("x2", pointX);
+    evolutionLine.setAttribute("y1", basisPointY);
+    evolutionLine.setAttribute("y2", pointY);
+    element("chartBasisPoint").setAttribute("cx", pointX);
+    element("chartBasisPoint").setAttribute("cy", basisPointY);
     element("chartPoint").setAttribute("cx", pointX);
     element("chartPoint").setAttribute("cy", pointY);
 
+    var basisLabel = element("chartBasisLabel");
+    var basisLabelBg = element("chartBasisLabelBg");
+    var basisCallout = element("chartBasisCallout");
     var pointLabel = element("chartPointLabel");
     var pointLabelBg = element("chartPointLabelBg");
     var pointCallout = element("chartPointCallout");
-    setText("chartPointLabel", "成本 " + result.newDilutedCost.toFixed(2));
-    pointLabel.setAttribute("x", 8);
-    pointLabel.setAttribute("y", 15);
+    setText("chartBasisLabel", "原成本 " + input.currentCost.toFixed(2));
+    setText("chartPointLabel", "新成本 " + result.newDilutedCost.toFixed(2));
 
-    var calloutWidth = 78;
-    var calloutHeight = 22;
-    var calloutGap = 14;
-    var calloutX = pointX + calloutGap;
-    if (calloutX + calloutWidth > width - 8) {
-      calloutX = pointX - calloutGap - calloutWidth;
-    }
-    var calloutY = pointY - calloutHeight - 10;
-    if (calloutY < 7) {
-      calloutY = pointY + 10;
-    }
-
+    var calloutWidth = 122;
+    var calloutHeight = 24;
+    var calloutY = 7;
+    var basisCalloutX = padding.left;
+    var pointCalloutX = basisCalloutX + calloutWidth + 8;
+    basisLabel.setAttribute("x", 10);
+    basisLabel.setAttribute("y", 16);
+    pointLabel.setAttribute("x", 10);
+    pointLabel.setAttribute("y", 16);
+    basisLabelBg.setAttribute("width", calloutWidth);
+    basisLabelBg.setAttribute("height", calloutHeight);
     pointLabelBg.setAttribute("width", calloutWidth);
     pointLabelBg.setAttribute("height", calloutHeight);
-    pointCallout.setAttribute("transform", "translate(" + calloutX.toFixed(1) + "," + calloutY.toFixed(1) + ")");
+    basisCallout.setAttribute("transform", "translate(" + basisCalloutX + "," + calloutY + ")");
+    pointCallout.setAttribute("transform", "translate(" + pointCalloutX + "," + calloutY + ")");
   }
 
   function showError(message) {
@@ -740,7 +1051,7 @@
 
   function updateDocumentTitle(input) {
     var label = stockLabel(input);
-    document.title = label ? label + " · 小算盘 · costbuddy" : "小算盘 · costbuddy";
+    document.title = label ? label + " · 小算盘 · CostBuddy" : "小算盘 · CostBuddy";
   }
 
   function updateResultInsight(input, result) {
@@ -752,7 +1063,8 @@
     } else if (input.sellShares === input.currentShares
       && input.buyShares > 0 && input.buyShares < input.currentShares) {
       message = "回本资金集中到较少股数，单股回本成本可能明显放大。";
-    } else if (input.buyShares > 0 && input.lotSize > 0 && input.buyShares % input.lotSize !== 0) {
+    } else if (normalizeMarket(input.market) === "hk" && input.buyShares > 0
+      && input.lotSize > 0 && input.buyShares % input.lotSize !== 0) {
       message = "当前买入股数不是整手，实际成交请确认碎股规则。";
     } else if (input.buyShares === 0 && input.sellShares === 0) {
       message = "当前没有设置交易，结果等于原持仓成本。";
@@ -777,20 +1089,54 @@
     resetConfirmTimer = window.setTimeout(cancelResetConfirmation, 3000);
   }
 
+
   function restoreExample() {
+    var defaults = marketDefaults(currentMarket, false);
     Object.keys(DEFAULTS).forEach(function (key) {
-      element(key).value = DEFAULTS[key];
+      element(key).value = defaults[key];
     });
     Object.keys(TEXT_DEFAULTS).forEach(function (key) {
       element(key).value = TEXT_DEFAULTS[key];
     });
-    feeSettings = Object.assign({}, DEFAULT_FEE_SETTINGS);
-    sellRange.value = DEFAULTS.sellPrice;
-    buyRange.value = DEFAULTS.buyPrice;
+    feeSettings = defaultFeeSettings(currentMarket);
+    applyMarketPresentation();
+    sellRange.value = defaults.sellPrice;
+    buyRange.value = defaults.buyPrice;
     update();
-    showCopyToast("已恢复示例参数", false);
+    showCopyToast("已恢复" + marketConfig(currentMarket).name + "示例参数", false);
   }
 
+  function setClearPlanMenuOpen(isOpen) {
+    clearPlanMenu.hidden = !isOpen;
+    clearPlanButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    clearPlanButton.classList.toggle("is-open", isOpen);
+  }
+
+  function clearTradePlan(scope) {
+    var shouldClearBuy = scope === "buy" || scope === "all";
+    var shouldClearSell = scope === "sell" || scope === "all";
+
+    if (shouldClearBuy) {
+      buyPriceInput.value = 0;
+      element("buyShares").value = 0;
+      element("buyFee").value = 0;
+      feeSettings.manualBuyFee = 0;
+      syncRangeFromNumber(buyRange, buyPriceInput);
+    }
+    if (shouldClearSell) {
+      sellPriceInput.value = 0;
+      element("sellShares").value = 0;
+      element("sellFee").value = 0;
+      feeSettings.manualSellFee = 0;
+      syncRangeFromNumber(sellRange, sellPriceInput);
+    }
+
+    setClearPlanMenuOpen(false);
+    update();
+    showCopyToast(scope === "buy"
+      ? "已清除买入计划"
+      : (scope === "sell" ? "已清除卖出计划" : "已清除全部买卖计划"), false);
+  }
   function openDialog(dialog) {
     if (typeof dialog.showModal === "function") {
       dialog.showModal();
@@ -826,16 +1172,23 @@
     return type;
   }
 
+
   function dialogFeeSettings() {
     var selectedMode = document.querySelector('input[name="feeMode"]:checked');
-    var securityType = syncSecurityTypePreset();
+    var isUs = currentMarket === "us";
+    var securityType = isUs ? "us-stock" : syncSecurityTypePreset();
     return {
       mode: selectedMode ? selectedMode.value : "manual",
       securityType: securityType,
-      commissionRate: Math.max(0, numberValue("commissionRate")),
-      minimumCommission: Math.max(0, numberValue("minimumCommission")),
-      includeStampDuty: element("includeStampDuty").checked,
-      includeSettlementFee: element("includeSettlementFee").checked,
+      commissionRate: Math.max(0, numberValue(isUs ? "usCommissionRate" : "commissionRate")),
+      minimumCommission: Math.max(0, numberValue(isUs ? "usMinimumCommission" : "minimumCommission")),
+      includeStampDuty: isUs ? false : element("includeStampDuty").checked,
+      includeSettlementFee: isUs ? false : element("includeSettlementFee").checked,
+      includeSecFee: isUs && element("includeSecFee").checked,
+      includeFinraTaf: isUs && element("includeFinraTaf").checked,
+      secRatePerMillion: feeSettings.secRatePerMillion,
+      finraTafRate: feeSettings.finraTafRate,
+      finraTafMax: feeSettings.finraTafMax,
       manualSellFee: feeSettings.manualSellFee,
       manualBuyFee: feeSettings.manualBuyFee
     };
@@ -844,23 +1197,22 @@
   function refreshFeeDialog() {
     var settings = dialogFeeSettings();
     var isAuto = settings.mode === "auto";
+    var isUs = currentMarket === "us";
     element("autoFeeSettings").hidden = !isAuto;
+    element("hkAutoFeeSettings").hidden = isUs;
+    element("usAutoFeeSettings").hidden = !isUs;
     setText("feeModeSummary", isAuto
-      ? securityTypeLabel(settings.securityType, false) + " · 按成交金额估算"
+      ? securityTypeLabel(settings.securityType, false, currentMarket) + " · 按成交金额估算"
       : "当前使用手动费用");
 
     var buyPreview = calculateEstimatedFee(
-      numberValue("buyShares"),
-      numberValue("buyPrice"),
-      settings
+      numberValue("buyShares"), numberValue("buyPrice"), settings, "buy", currentMarket
     );
     var sellPreview = calculateEstimatedFee(
-      numberValue("sellShares"),
-      numberValue("sellPrice"),
-      settings
+      numberValue("sellShares"), numberValue("sellPrice"), settings, "sell", currentMarket
     );
-    setText("autoBuyFeePreview", formatMoney(buyPreview.total));
-    setText("autoSellFeePreview", formatMoney(sellPreview.total));
+    setText("autoBuyFeePreview", formatMoney(buyPreview.total, currentMarket));
+    setText("autoSellFeePreview", formatMoney(sellPreview.total, currentMarket));
   }
 
   function syncFeeDialog() {
@@ -876,10 +1228,15 @@
     element("minimumCommission").value = feeSettings.minimumCommission;
     element("includeStampDuty").checked = feeSettings.includeStampDuty;
     element("includeSettlementFee").checked = feeSettings.includeSettlementFee;
-    syncSecurityTypePreset();
+    element("usCommissionRate").value = feeSettings.commissionRate;
+    element("usMinimumCommission").value = feeSettings.minimumCommission;
+    element("includeSecFee").checked = feeSettings.includeSecFee;
+    element("includeFinraTaf").checked = feeSettings.includeFinraTaf;
+    if (currentMarket === "hk") {
+      syncSecurityTypePreset();
+    }
     refreshFeeDialog();
   }
-
   function applyFeeSettingsFromDialog() {
     var nextSettings = dialogFeeSettings();
     if (feeSettings.mode === "manual") {
@@ -898,32 +1255,32 @@
     update();
   }
 
+
   function resultCopyText(input, result) {
     var cashFlowText = Math.abs(result.netCashFlow) < 0.005
       ? "现金流持平"
       : (result.netCashFlow > 0
-        ? "净收回 " + formatMoney(result.netCashFlow)
-        : "净投入 " + formatMoney(Math.abs(result.netCashFlow)));
-    var lines = ["小算盘 · costbuddy"];
+        ? "净收回 " + formatMoney(result.netCashFlow, input.market)
+        : "净投入 " + formatMoney(Math.abs(result.netCashFlow), input.market));
+    var lines = ["小算盘 · CostBuddy", "市场：" + marketConfig(input.market).name];
     if (stockLabel(input)) {
       lines.push("证券：" + stockLabel(input));
     }
     lines.push(
-      "目前持仓：" + formatNumber(input.currentShares, 0) + " 股",
-      "目前成本：" + formatMoney(input.currentCost) + " / 股",
-      "买入：" + formatNumber(input.buyShares, 0) + " 股 × " + formatMoney(input.buyPrice),
-      "卖出：" + formatNumber(input.sellShares, 0) + " 股 × " + formatMoney(input.sellPrice),
-      "交易费用：" + formatMoney(result.totalFees) + "（" + (input.feeMode === "auto"
-        ? "自动估算 · " + securityTypeLabel(input.feeSettings.securityType, false)
+      "目前持仓：" + formatNumber(input.currentShares, 0, input.market) + " 股",
+      "目前成本：" + formatMoney(input.currentCost, input.market) + " / 股",
+      "买入：" + formatNumber(input.buyShares, 0, input.market) + " 股 × " + formatMoney(input.buyPrice, input.market),
+      "卖出：" + formatNumber(input.sellShares, 0, input.market) + " 股 × " + formatMoney(input.sellPrice, input.market),
+      "交易费用：" + formatMoney(result.totalFees, input.market) + "（" + (input.feeMode === "auto"
+        ? "自动估算 · " + securityTypeLabel(input.feeSettings.securityType, false, input.market)
         : "手动填写") + "）",
-      "交易后持仓：" + formatNumber(result.finalShares, 0) + " 股",
-      "资金回本成本：" + formatMoney(result.newDilutedCost) + " / 股",
+      "交易后持仓：" + formatNumber(result.finalShares, 0, input.market) + " 股",
+      "资金回本成本：" + formatMoney(result.newDilutedCost, input.market) + " / 股",
       "本次净现金流：" + cashFlowText,
       "仅用于持仓测算，不构成投资建议。"
     );
     return lines.join("\n");
   }
-
   function fallbackCopy(text) {
     var textArea = document.createElement("textarea");
     textArea.value = text;
@@ -966,71 +1323,109 @@
     copyText(resultCopyText(latestInput, latestResult), "测算结果已复制");
   }
 
-  function normalizedFeeSettings(source) {
-    var settings = Object.assign({}, DEFAULT_FEE_SETTINGS);
+
+  function normalizedFeeSettings(source, market) {
+    var activeMarket = normalizeMarket(market || (source && source.market) || currentMarket);
+    var settings = defaultFeeSettings(activeMarket);
     if (!source || typeof source !== "object") {
       return settings;
     }
     settings.mode = source.mode === "auto" ? "auto" : "manual";
-    settings.securityType = ["stock", "stamp-exempt", "custom"].indexOf(source.securityType) >= 0
-      ? source.securityType
-      : (source.includeStampDuty === false ? "stamp-exempt" : "stock");
-    ["commissionRate", "minimumCommission", "manualSellFee", "manualBuyFee"].forEach(function (key) {
+    if (activeMarket === "us") {
+      settings.securityType = "us-stock";
+    } else {
+      settings.securityType = ["stock", "stamp-exempt", "custom"].indexOf(source.securityType) >= 0
+        ? source.securityType
+        : (source.includeStampDuty === false ? "stamp-exempt" : "stock");
+    }
+    [
+      "commissionRate", "minimumCommission", "manualSellFee", "manualBuyFee",
+      "secRatePerMillion", "finraTafRate", "finraTafMax"
+    ].forEach(function (key) {
       if (source[key] !== null && source[key] !== "" && Number.isFinite(Number(source[key]))) {
-        settings[key] = Number(source[key]);
+        settings[key] = Math.max(0, Number(source[key]));
       }
     });
-    settings.includeStampDuty = source.includeStampDuty !== false;
-    if (settings.securityType === "stock") {
-      settings.includeStampDuty = true;
-    } else if (settings.securityType === "stamp-exempt") {
+    ["includeStampDuty", "includeSettlementFee", "includeSecFee", "includeFinraTaf"].forEach(function (key) {
+      if (typeof source[key] === "boolean") {
+        settings[key] = source[key];
+      }
+    });
+    if (activeMarket === "hk") {
+      if (settings.securityType === "stock") {
+        settings.includeStampDuty = true;
+      } else if (settings.securityType === "stamp-exempt") {
+        settings.includeStampDuty = false;
+      }
+      settings.includeSecFee = false;
+      settings.includeFinraTaf = false;
+    } else {
       settings.includeStampDuty = false;
+      settings.includeSettlementFee = false;
     }
-    settings.includeSettlementFee = source.includeSettlementFee !== false;
     return settings;
   }
 
   function captureFormValues() {
-    var values = {};
+    var values = { market: currentMarket };
     Object.keys(DEFAULTS).forEach(function (key) {
-      values[key] = numberValue(key);
+      values[key] = key === "lotSize" && currentMarket === "us" ? 1 : numberValue(key);
     });
-    values.stockCode = normalizedStockCode(textValue("stockCode"));
+    values.stockCode = normalizedStockCode(textValue("stockCode"), currentMarket);
     values.stockName = textValue("stockName");
     return values;
   }
 
   function inputFromState(values, settingsSource) {
-    var settings = normalizedFeeSettings(settingsSource);
-    var input = {};
+    var activeMarket = normalizeMarket(values && values.market);
+    var settings = normalizedFeeSettings(settingsSource, activeMarket);
+    var defaults = marketDefaults(activeMarket, false);
+    var input = { market: activeMarket };
     Object.keys(DEFAULTS).forEach(function (key) {
-      input[key] = Number(values[key]);
+      input[key] = Number.isFinite(Number(values && values[key])) ? Number(values[key]) : defaults[key];
     });
-    input.stockCode = normalizedStockCode(values.stockCode);
-    input.stockName = String(values.stockName || "").trim();
+    if (activeMarket === "us") {
+      input.lotSize = 1;
+    }
+    input.stockCode = normalizedStockCode(values && values.stockCode, activeMarket);
+    input.stockName = String(values && values.stockName || "").trim();
     input.feeMode = settings.mode;
     input.feeSettings = Object.assign({}, settings);
     if (settings.mode === "auto") {
-      input.sellFee = calculateEstimatedFee(input.sellShares, input.sellPrice, settings).total;
-      input.buyFee = calculateEstimatedFee(input.buyShares, input.buyPrice, settings).total;
+      input.sellFee = calculateEstimatedFee(
+        input.sellShares, input.sellPrice, settings, "sell", activeMarket
+      ).total;
+      input.buyFee = calculateEstimatedFee(
+        input.buyShares, input.buyPrice, settings, "buy", activeMarket
+      ).total;
     }
     return input;
   }
 
   function setCalculatorState(values, settingsSource, shouldUpdate) {
+    currentMarket = normalizeMarket(values && values.market);
+    var defaults = marketDefaults(currentMarket, false);
+    feeSettings = normalizedFeeSettings(settingsSource, currentMarket);
+    applyMarketPresentation();
     Object.keys(DEFAULTS).forEach(function (key) {
-      if (Number.isFinite(Number(values[key]))) {
+      if (Number.isFinite(Number(values && values[key]))) {
         element(key).value = Number(values[key]);
+      } else {
+        element(key).value = defaults[key];
       }
     });
-    element("stockCode").value = normalizedStockCode(values.stockCode);
-    element("stockName").value = String(values.stockName || "").trim();
-    feeSettings = normalizedFeeSettings(settingsSource);
+    if (currentMarket === "us") {
+      element("lotSize").value = 1;
+    } else {
+      lastHkLotSize = Math.max(1, numberValue("lotSize"));
+    }
+    element("stockCode").value = normalizedStockCode(values && values.stockCode, currentMarket);
+    element("stockName").value = String(values && values.stockName || "").trim();
     if (feeSettings.mode === "manual") {
-      feeSettings.manualSellFee = Number.isFinite(Number(values.sellFee))
+      feeSettings.manualSellFee = Number.isFinite(Number(values && values.sellFee))
         ? Number(values.sellFee)
         : feeSettings.manualSellFee;
-      feeSettings.manualBuyFee = Number.isFinite(Number(values.buyFee))
+      feeSettings.manualBuyFee = Number.isFinite(Number(values && values.buyFee))
         ? Number(values.buyFee)
         : feeSettings.manualBuyFee;
       element("sellFee").value = feeSettings.manualSellFee;
@@ -1048,6 +1443,7 @@
     url.search = "";
     url.hash = "";
     url.searchParams.set("plan", "1");
+    url.searchParams.set("m", currentMarket);
     var values = captureFormValues();
     Object.keys(SHARE_FIELDS).forEach(function (key) {
       url.searchParams.set(SHARE_FIELDS[key], compactNumber(values[key]));
@@ -1065,9 +1461,10 @@
     url.searchParams.set("mbf", compactNumber(feeSettings.manualBuyFee));
     url.searchParams.set("sd", feeSettings.includeStampDuty ? "1" : "0");
     url.searchParams.set("st", feeSettings.includeSettlementFee ? "1" : "0");
+    url.searchParams.set("s31", feeSettings.includeSecFee ? "1" : "0");
+    url.searchParams.set("taf", feeSettings.includeFinraTaf ? "1" : "0");
     return url.toString();
   }
-
   function shareCurrentPlan() {
     if (!latestInput || !latestResult) {
       showCopyToast("请先修正输入内容", true);
@@ -1076,13 +1473,16 @@
     copyText(buildShareUrl(), "分享链接已复制");
   }
 
+
   function loadSharedState() {
     try {
       var params = new URL(window.location.href).searchParams;
       if (params.get("plan") !== "1") {
         return false;
       }
-      var values = {};
+      var sharedMarket = normalizeMarket(params.get("m"));
+      var defaults = marketDefaults(sharedMarket, false);
+      var values = { market: sharedMarket };
       var validFields = 0;
       Object.keys(SHARE_FIELDS).forEach(function (key) {
         var raw = params.get(SHARE_FIELDS[key]);
@@ -1090,7 +1490,7 @@
           values[key] = Number(raw);
           validFields += 1;
         } else {
-          values[key] = DEFAULTS[key];
+          values[key] = defaults[key];
         }
       });
       if (validFields === 0) {
@@ -1106,16 +1506,17 @@
         minimumCommission: params.get("mc"),
         includeStampDuty: params.get("sd") !== "0",
         includeSettlementFee: params.get("st") !== "0",
+        includeSecFee: params.get("s31") !== "0",
+        includeFinraTaf: params.get("taf") !== "0",
         manualSellFee: params.get("msf") !== null ? params.get("msf") : values.sellFee,
         manualBuyFee: params.get("mbf") !== null ? params.get("mbf") : values.buyFee
-      });
+      }, sharedMarket);
       setCalculatorState(values, sharedSettings, false);
       return true;
     } catch (error) {
       return false;
     }
   }
-
   function scenarioSnapshot() {
     return {
       values: captureFormValues(),
@@ -1124,11 +1525,13 @@
     };
   }
 
+
   function normalizedScenario(source) {
     if (!source || typeof source !== "object" || !source.values) {
       return null;
     }
-    var values = {};
+    var activeMarket = normalizeMarket(source.market || source.values.market);
+    var values = { market: activeMarket };
     var valid = true;
     Object.keys(DEFAULTS).forEach(function (key) {
       if (!Number.isFinite(Number(source.values[key]))) {
@@ -1137,15 +1540,18 @@
         values[key] = Number(source.values[key]);
       }
     });
-    values.stockCode = normalizedStockCode(source.values.stockCode);
+    if (activeMarket === "us") {
+      values.lotSize = 1;
+    }
+    values.stockCode = normalizedStockCode(source.values.stockCode, activeMarket);
     values.stockName = String(source.values.stockName || "").trim();
     return valid ? {
+      market: activeMarket,
       values: values,
-      feeSettings: normalizedFeeSettings(source.feeSettings),
+      feeSettings: normalizedFeeSettings(source.feeSettings, activeMarket),
       savedAt: Number(source.savedAt) || 0
     } : null;
   }
-
   function normalizedScenarios(source) {
     return {
       A: normalizedScenario(source && source.A),
@@ -1163,11 +1569,13 @@
     updateScenarioCount();
   }
 
+
   function normalizeHoldingRecord(source) {
     if (!source || typeof source !== "object" || !source.id || !source.values) {
       return null;
     }
-    var values = {};
+    var activeMarket = normalizeMarket(source.market || source.values.market);
+    var values = { market: activeMarket };
     var valid = true;
     Object.keys(DEFAULTS).forEach(function (key) {
       if (!Number.isFinite(Number(source.values[key]))) {
@@ -1179,17 +1587,20 @@
     if (!valid) {
       return null;
     }
-    values.stockCode = normalizedStockCode(source.values.stockCode);
+    if (activeMarket === "us") {
+      values.lotSize = 1;
+    }
+    values.stockCode = normalizedStockCode(source.values.stockCode, activeMarket);
     values.stockName = String(source.values.stockName || "").trim();
     return {
       id: String(source.id),
+      market: activeMarket,
       values: values,
-      feeSettings: normalizedFeeSettings(source.feeSettings),
+      feeSettings: normalizedFeeSettings(source.feeSettings, activeMarket),
       scenarios: normalizedScenarios(source.scenarios),
       updatedAt: Number(source.updatedAt) || Date.now()
     };
   }
-
   function loadHoldingRecords() {
     try {
       var saved = JSON.parse(localStorage.getItem(HOLDINGS_STORAGE_KEY));
@@ -1220,14 +1631,15 @@
     return holdingRecords.find(function (record) { return record.id === id; }) || null;
   }
 
+
   function holdingStateSignature(values, settings, scenarioState) {
+    var activeMarket = normalizeMarket(values && values.market);
     return JSON.stringify({
       values: values,
-      feeSettings: normalizedFeeSettings(settings),
+      feeSettings: normalizedFeeSettings(settings, activeMarket),
       scenarios: normalizedScenarios(scenarioState)
     });
   }
-
   function currentStateSignature() {
     return holdingStateSignature(captureFormValues(), feeSettings, scenarios);
   }
@@ -1299,11 +1711,14 @@
     return result.error ? null : { input: input, result: result };
   }
 
-  function scenarioCashText(value) {
+
+  function scenarioCashText(value, market) {
     if (Math.abs(value) < 0.005) {
       return "持平";
     }
-    return value > 0 ? "收回 " + formatMoney(value) : "投入 " + formatMoney(Math.abs(value));
+    return value > 0
+      ? "收回 " + formatMoney(value, market)
+      : "投入 " + formatMoney(Math.abs(value), market);
   }
 
   function renderScenarioSlot(slot) {
@@ -1325,13 +1740,14 @@
     var input = calculation.input;
     var result = calculation.result;
     setText("scenarioOrder" + slot,
-      (stockLabel(input) ? stockLabel(input) + " · " : "")
-      + "买 " + formatNumber(input.buyShares, 0) + " 股 @ " + formatMoney(input.buyPrice)
-      + " · 卖 " + formatNumber(input.sellShares, 0) + " 股 @ " + formatMoney(input.sellPrice));
-    setText("scenarioCost" + slot, formatMoney(result.newDilutedCost));
-    setText("scenarioCash" + slot, scenarioCashText(result.netCashFlow));
-    setText("scenarioShares" + slot, formatNumber(result.finalShares, 0) + " 股");
-    setText("scenarioFees" + slot, formatMoney(result.totalFees));
+      marketConfig(input.market).shortName + " · "
+      + (stockLabel(input) ? stockLabel(input) + " · " : "")
+      + "买 " + formatNumber(input.buyShares, 0, input.market) + " 股 @ " + formatMoney(input.buyPrice, input.market)
+      + " · 卖 " + formatNumber(input.sellShares, 0, input.market) + " 股 @ " + formatMoney(input.sellPrice, input.market));
+    setText("scenarioCost" + slot, formatMoney(result.newDilutedCost, input.market));
+    setText("scenarioCash" + slot, scenarioCashText(result.netCashFlow, input.market));
+    setText("scenarioShares" + slot, formatNumber(result.finalShares, 0, input.market) + " 股");
+    setText("scenarioFees" + slot, formatMoney(result.totalFees, input.market));
     return calculation;
   }
 
@@ -1341,16 +1757,21 @@
     var comparison = element("scenarioComparison");
     comparison.hidden = !(calculationA && calculationB);
     if (calculationA && calculationB) {
-      var costDifference = calculationB.result.newDilutedCost - calculationA.result.newDilutedCost;
-      var cashDifference = calculationB.result.netCashFlow - calculationA.result.netCashFlow;
-      var costText = Math.abs(costDifference) < 0.005
-        ? "回本成本持平"
-        : "回本成本" + (costDifference < 0 ? "低 " : "高 ") + formatMoney(Math.abs(costDifference));
-      setText("scenarioComparisonText", costText + "；净资金流差 " + formatSignedMoney(cashDifference));
+      if (calculationA.input.market !== calculationB.input.market) {
+        setText("scenarioComparisonText", "不同市场币种不同，不直接比较金额。");
+      } else {
+        var market = calculationA.input.market;
+        var costDifference = calculationB.result.newDilutedCost - calculationA.result.newDilutedCost;
+        var cashDifference = calculationB.result.netCashFlow - calculationA.result.netCashFlow;
+        var costText = Math.abs(costDifference) < 0.005
+          ? "回本成本持平"
+          : "回本成本" + (costDifference < 0 ? "低 " : "高 ")
+            + formatMoney(Math.abs(costDifference), market);
+        setText("scenarioComparisonText", costText + "；净资金流差 " + formatSignedMoney(cashDifference, market));
+      }
     }
     updateScenarioCount();
   }
-
   function handleScenarioAction(action, slot) {
     if (slot !== "A" && slot !== "B") {
       return;
@@ -1416,15 +1837,25 @@
     }
   }
 
+
   function normalizeBackupPayload(source) {
+    var version = Number(source && source.version);
     if (!source || typeof source !== "object" || source.format !== BACKUP_FORMAT
-        || Number(source.version) !== BACKUP_VERSION || !source.data || typeof source.data !== "object") {
+        || (version !== 1 && version !== BACKUP_VERSION)
+        || !source.data || typeof source.data !== "object") {
       throw new Error("unsupported-backup");
     }
     var currentSource = source.data.current;
+    var currentValues = currentSource && currentSource.values
+      ? Object.assign({}, currentSource.values)
+      : null;
+    if (currentValues && !currentValues.market) {
+      currentValues.market = normalizeMarket(currentSource && currentSource.market);
+    }
     var normalizedCurrent = normalizeHoldingRecord({
       id: "backup-current",
-      values: currentSource && currentSource.values,
+      market: currentValues && currentValues.market,
+      values: currentValues,
       feeSettings: currentSource && currentSource.feeSettings,
       scenarios: currentSource && currentSource.scenarios,
       updatedAt: Date.now()
@@ -1452,7 +1883,6 @@
       }
     };
   }
-
   function previewBackupImport(backup) {
     pendingImportBackup = backup;
     var timeText = backup.exportedAt ? formatHoldingTime(backup.exportedAt) + " 导出" : "未记录导出时间";
@@ -1524,8 +1954,9 @@
       currentRecordId = record.id;
       holdingRecords.push(record);
     }
+    record.market = currentMarket;
     record.values = captureFormValues();
-    record.feeSettings = normalizedFeeSettings(feeSettings);
+    record.feeSettings = normalizedFeeSettings(feeSettings, currentMarket);
     record.scenarios = normalizedScenarios(scenarios);
     record.updatedAt = Date.now();
     holdingRecords.sort(function (a, b) { return b.updatedAt - a.updatedAt; });
@@ -1555,6 +1986,7 @@
       + " " + pad(date.getHours()) + ":" + pad(date.getMinutes());
   }
 
+
   function renderHoldingBook() {
     holdingList.replaceChildren();
     holdingEmpty.hidden = holdingRecords.length > 0;
@@ -1562,11 +1994,12 @@
       var calculation = holdingCalculation(record);
       var card = document.createElement("article");
       var isCurrent = record.id === currentRecordId;
+      var recordMarket = normalizeMarket(record.market || record.values.market);
       card.className = "holding-card" + (isCurrent ? " is-current" : "");
       card.dataset.recordId = record.id;
       card.innerHTML = ""
         + '<div class="holding-card-header">'
-        + '  <div class="holding-card-title"><strong data-field="code"></strong><span data-field="name"></span></div>'
+        + '  <div class="holding-card-title"><em class="holding-market-badge" data-field="market"></em><strong data-field="code"></strong><span data-field="name"></span></div>'
         + '  <span class="holding-card-status" data-field="status"></span>'
         + '</div>'
         + '<div class="holding-card-metrics">'
@@ -1582,16 +2015,17 @@
         + '    <button class="holding-delete-button" type="button" data-holding-action="delete">删除</button>'
         + '  </div>'
         + '</div>';
+      card.querySelector('[data-field="market"]').textContent = marketConfig(recordMarket).shortName;
       card.querySelector('[data-field="code"]').textContent = record.values.stockCode || "未填写代码";
       card.querySelector('[data-field="name"]').textContent = record.values.stockName || "未命名持仓";
       card.querySelector('[data-field="status"]').textContent = isCurrent
         ? (isCurrentDirty() ? "正在编辑 · 有修改" : "正在编辑")
         : "已保存";
-      card.querySelector('[data-field="shares"]').textContent = formatNumber(record.values.currentShares, 0) + " 股";
-      card.querySelector('[data-field="cost"]').textContent = formatMoney(record.values.currentCost);
-      card.querySelector('[data-field="price"]').textContent = formatMoney(record.values.marketPrice);
+      card.querySelector('[data-field="shares"]').textContent = formatNumber(record.values.currentShares, 0, recordMarket) + " 股";
+      card.querySelector('[data-field="cost"]').textContent = formatMoney(record.values.currentCost, recordMarket);
+      card.querySelector('[data-field="price"]').textContent = formatMoney(record.values.marketPrice, recordMarket);
       card.querySelector('[data-field="basis"]').textContent = calculation
-        ? formatMoney(calculation.result.newDilutedCost)
+        ? formatMoney(calculation.result.newDilutedCost, recordMarket)
         : "—";
       card.querySelector('[data-field="time"]').textContent = formatHoldingTime(record.updatedAt) + " 更新";
       if (pendingDeleteId === record.id) {
@@ -1603,7 +2037,6 @@
     });
     updateHoldingCount();
   }
-
   function loadHoldingRecord(recordId) {
     var record = findHoldingRecord(recordId);
     if (!record) {
@@ -1634,8 +2067,9 @@
     showCopyToast("持仓记录已删除", false);
   }
 
+
   function startNewMeasurement() {
-    var nextFeeSettings = normalizedFeeSettings(feeSettings);
+    var nextFeeSettings = normalizedFeeSettings(feeSettings, currentMarket);
     nextFeeSettings.manualSellFee = 0;
     nextFeeSettings.manualBuyFee = 0;
     currentRecordId = null;
@@ -1643,7 +2077,7 @@
     pendingDeleteId = null;
     scenarios = { A: null, B: null };
     persistHoldingRecords();
-    setCalculatorState(NEW_MEASUREMENT_VALUES, nextFeeSettings, true);
+    setCalculatorState(marketDefaults(currentMarket, true), nextFeeSettings, true);
     updateScenarioCount();
     updateSavedStateUI();
     closeDialog(holdingBookDialog);
@@ -1651,7 +2085,6 @@
     element("stockCode").focus();
     showCopyToast("已新建空白测算", false);
   }
-
   function performPendingUnsavedAction() {
     var action = pendingUnsavedAction;
     pendingUnsavedAction = null;
@@ -1713,54 +2146,33 @@
     }
   }
 
+
   function loadInputs() {
     try {
       var saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (!saved || typeof saved !== "object") {
+        applyMarketPresentation();
         return;
       }
-      Object.keys(DEFAULTS).forEach(function (key) {
-        if (Number.isFinite(Number(saved[key]))) {
-          element(key).value = saved[key];
-        }
-      });
-      element("stockCode").value = normalizedStockCode(saved.stockCode);
-      element("stockName").value = String(saved.stockName || "").trim();
+      var savedMarket = normalizeMarket(saved.market);
+      saved.market = savedMarket;
       var savedFeeSettings = saved._feeSettings || saved.feeSettings;
-      if (savedFeeSettings && typeof savedFeeSettings === "object") {
-        feeSettings.mode = savedFeeSettings.mode === "auto" ? "auto" : "manual";
-        feeSettings.securityType = ["stock", "stamp-exempt", "custom"].indexOf(savedFeeSettings.securityType) >= 0
-          ? savedFeeSettings.securityType
-          : (savedFeeSettings.includeStampDuty === false ? "stamp-exempt" : "stock");
-        ["commissionRate", "minimumCommission", "manualSellFee", "manualBuyFee"].forEach(function (key) {
-          if (Number.isFinite(Number(savedFeeSettings[key]))) {
-            feeSettings[key] = Number(savedFeeSettings[key]);
-          }
-        });
-        feeSettings.includeStampDuty = savedFeeSettings.includeStampDuty !== false;
-        if (feeSettings.securityType === "stock") {
-          feeSettings.includeStampDuty = true;
-        } else if (feeSettings.securityType === "stamp-exempt") {
-          feeSettings.includeStampDuty = false;
-        }
-        feeSettings.includeSettlementFee = savedFeeSettings.includeSettlementFee !== false;
-      } else {
-        feeSettings.manualSellFee = Number.isFinite(Number(saved.sellFee))
+      if (!savedFeeSettings || typeof savedFeeSettings !== "object") {
+        savedFeeSettings = defaultFeeSettings(savedMarket);
+        savedFeeSettings.manualSellFee = Number.isFinite(Number(saved.sellFee))
           ? Number(saved.sellFee)
-          : DEFAULT_FEE_SETTINGS.manualSellFee;
-        feeSettings.manualBuyFee = Number.isFinite(Number(saved.buyFee))
+          : savedFeeSettings.manualSellFee;
+        savedFeeSettings.manualBuyFee = Number.isFinite(Number(saved.buyFee))
           ? Number(saved.buyFee)
-          : DEFAULT_FEE_SETTINGS.manualBuyFee;
+          : savedFeeSettings.manualBuyFee;
       }
-      if (feeSettings.mode === "manual") {
-        element("sellFee").value = feeSettings.manualSellFee;
-        element("buyFee").value = feeSettings.manualBuyFee;
-      }
+      setCalculatorState(saved, savedFeeSettings, false);
     } catch (error) {
-      // Invalid or unavailable storage falls back to the example values.
+      currentMarket = "hk";
+      feeSettings = defaultFeeSettings(currentMarket);
+      applyMarketPresentation();
     }
   }
-
   function syncRangeFromNumber(range, numberInput) {
     range.value = Math.max(Number(range.min), Math.min(Number(range.max), Number(numberInput.value) || 0));
   }
@@ -1778,14 +2190,24 @@
     }
   }
 
+
   function update() {
     var input = getInputs();
     var result = calculateCosts(input);
+    var isUs = input.market === "us";
 
-    setText("sellLots", input.lotSize > 0 ? (input.sellShares / input.lotSize).toFixed(2) + " 手" : "— 手");
-    setText("buyLots", input.lotSize > 0 ? (input.buyShares / input.lotSize).toFixed(2) + " 手" : "— 手");
-    setText("sellPriceOutput", formatMoney(input.sellPrice));
-    setText("buyPriceOutput", formatMoney(input.buyPrice));
+    setText("mobileResultPreview", result.error
+      ? "参数未完成"
+      : formatMoney(result.newDilutedCost, input.market) + " / 股");
+
+    setText("sellLots", isUs
+      ? formatNumber(input.sellShares, 0, input.market) + " 股"
+      : (input.lotSize > 0 ? (input.sellShares / input.lotSize).toFixed(2) + " 手" : "— 手"));
+    setText("buyLots", isUs
+      ? formatNumber(input.buyShares, 0, input.market) + " 股"
+      : (input.lotSize > 0 ? (input.buyShares / input.lotSize).toFixed(2) + " 手" : "— 手"));
+    setText("sellPriceOutput", formatMoney(input.sellPrice, input.market));
+    setText("buyPriceOutput", formatMoney(input.buyPrice, input.market));
     updateDocumentTitle(input);
     updateRangeVisual(sellRange);
     updateRangeVisual(buyRange);
@@ -1809,12 +2231,14 @@
     latestInput = input;
     latestResult = result;
     copyResultButton.disabled = false;
-    setText("calculationBadge", input.feeMode === "auto" ? "费用自动估算" : "已含双边费用");
+    setText("calculationBadge", input.feeMode === "auto"
+      ? marketConfig(input.market).name + "费用自动估算"
+      : "已含双边费用");
 
     setText("newDilutedCost", result.newDilutedCost.toFixed(2));
-    setText("finalShares", formatNumber(result.finalShares, 0) + " 股");
-    setText("recoverableCost", formatMoney(result.recoverableCost));
-    setText("totalPnl", formatSignedMoney(result.totalPnl));
+    setText("finalShares", formatNumber(result.finalShares, 0, input.market) + " 股");
+    setText("recoverableCost", formatMoney(result.recoverableCost, input.market));
+    setText("totalPnl", formatSignedMoney(result.totalPnl, input.market));
     element("totalPnl").className = result.totalPnl >= 0 ? "positive" : "negative";
     setText("pnlIcon", result.totalPnl >= 0 ? "盈" : "损");
     element("pnlIcon").className = "metric-icon pnl-icon " + (result.totalPnl >= 0 ? "positive" : "negative");
@@ -1823,7 +2247,8 @@
       : (result.breakEvenGap >= 0 ? "+" : "") + result.breakEvenGap.toFixed(2) + "%");
     setText("costChange", Math.abs(result.costDelta) < 0.005
       ? "与目前成本基本持平"
-      : "较目前成本" + (result.costDelta < 0 ? "下降 " : "上升 ") + formatMoney(Math.abs(result.costDelta)) + " / 股");
+      : "较目前成本" + (result.costDelta < 0 ? "下降 " : "上升 ")
+        + formatMoney(Math.abs(result.costDelta), input.market) + " / 股");
     element("costChange").className = "cost-change "
       + (Math.abs(result.costDelta) < 0.005 ? "cost-neutral" : (result.costDelta < 0 ? "cost-lower" : "cost-higher"));
     updateResultInsight(input, result);
@@ -1833,17 +2258,18 @@
       setText("netCashFlow", "现金流持平");
       element("netCashFlow").className = "";
     } else if (result.netCashFlow > 0) {
-      setText("netCashFlow", "净收回 " + formatMoney(result.netCashFlow));
+      setText("netCashFlow", "净收回 " + formatMoney(result.netCashFlow, input.market));
       element("netCashFlow").className = "positive";
     } else {
-      setText("netCashFlow", "净投入 " + formatMoney(Math.abs(result.netCashFlow)));
+      setText("netCashFlow", "净投入 " + formatMoney(Math.abs(result.netCashFlow), input.market));
       element("netCashFlow").className = "negative";
     }
 
-    setText("originalBasis", formatMoney(result.originalBasis));
-    setText("netSaleProceeds", (result.netSaleProceeds >= 0 ? "−" : "+") + formatMoney(Math.abs(result.netSaleProceeds)));
-    setText("buyOutlay", "+" + formatMoney(result.buyOutlay));
-    setText("totalFees", formatMoney(result.totalFees));
+    setText("originalBasis", formatMoney(result.originalBasis, input.market));
+    setText("netSaleProceeds", (result.netSaleProceeds >= 0 ? "−" : "+")
+      + formatMoney(Math.abs(result.netSaleProceeds), input.market));
+    setText("buyOutlay", "+" + formatMoney(result.buyOutlay, input.market));
+    setText("totalFees", formatMoney(result.totalFees, input.market));
     setText("formulaText",
       "(" + compactNumber(input.currentShares) + " × " + compactNumber(input.currentCost)
       + " − (" + compactNumber(input.sellShares) + " × " + compactNumber(input.sellPrice) + " − " + compactNumber(result.appliedSellFee) + ")"
@@ -1862,7 +2288,6 @@
     saveInputs(input);
     updateSavedStateUI();
   }
-
   sellRange.addEventListener("input", function () {
     sellPriceInput.value = sellRange.value;
     update();
@@ -1889,6 +2314,18 @@
       update();
     }
   });
+  themeToggleButton.addEventListener("click", function () {
+    applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+  });
+  supportFeedbackButton.addEventListener("click", function () {
+    openDialog(supportDialog);
+  });
+  copyFeedbackEmailButton.addEventListener("click", function () {
+    copyText("imurio@163.com", "邮箱已复制");
+  });
+  copyWechatButton.addEventListener("click", function () {
+    copyText("idemising", "微信号已复制");
+  });
   resetButton.addEventListener("click", function () {
     if (!resetArmed) {
       armResetConfirmation();
@@ -1896,6 +2333,30 @@
     }
     cancelResetConfirmation();
     restoreExample();
+  });
+  clearPlanButton.addEventListener("click", function () {
+    var willOpen = clearPlanMenu.hidden;
+    setClearPlanMenuOpen(willOpen);
+    if (willOpen) {
+      var firstMenuItem = clearPlanMenu.querySelector("button[data-clear-plan]");
+      window.requestAnimationFrame(function () {
+        firstMenuItem.focus();
+      });
+    }
+  });
+  clearPlanMenu.addEventListener("click", function (event) {
+    var actionButton = event.target.closest("button[data-clear-plan]");
+    if (actionButton) {
+      clearTradePlan(actionButton.dataset.clearPlan);
+    }
+  });
+  mobilePageButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      setMobilePage(button.dataset.mobilePageTarget, true);
+    });
+  });
+  mobileResultsButton.addEventListener("click", function () {
+    setMobilePage("results", true);
   });
   applyTargetPlanButton.addEventListener("click", function () {
     if (!latestTargetPlan) {
@@ -1931,7 +2392,9 @@
         customSecurityType.checked = true;
       }
     }
-    syncSecurityTypePreset();
+    if (currentMarket === "hk") {
+      syncSecurityTypePreset();
+    }
     refreshFeeDialog();
   });
   element("applyFeeSettings").addEventListener("click", applyFeeSettingsFromDialog);
@@ -2031,11 +2494,21 @@
     }
   });
 
+  element("marketSwitch").addEventListener("click", function (event) {
+    var button = event.target.closest("button[data-market]");
+    if (button) {
+      switchMarket(button.dataset.market);
+    }
+  });
+
   element("stockCode").addEventListener("blur", function () {
-    element("stockCode").value = normalizedStockCode(element("stockCode").value);
+    element("stockCode").value = normalizedStockCode(element("stockCode").value, currentMarket);
     update();
   });
   document.addEventListener("click", function (event) {
+    if (!clearPlanMenu.hidden && !event.target.closest(".clear-plan-control")) {
+      setClearPlanMenuOpen(false);
+    }
     if (resetArmed && !event.target.closest("#resetButton")) {
       cancelResetConfirmation();
     }
@@ -2047,12 +2520,19 @@
     }
   });
 
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !clearPlanMenu.hidden) {
+      setClearPlanMenuOpen(false);
+      clearPlanButton.focus();
+    }
+  });
+
   document.querySelectorAll("[data-close-dialog]").forEach(function (button) {
     button.addEventListener("click", function () {
       closeDialog(button.closest("dialog"));
     });
   });
-  [basisDialog, feeDialog, scenarioDialog, holdingBookDialog].forEach(function (dialog) {
+  [basisDialog, feeDialog, scenarioDialog, holdingBookDialog, supportDialog].forEach(function (dialog) {
     dialog.addEventListener("click", function (event) {
       if (event.target === dialog) {
         closeDialog(dialog);
@@ -2061,6 +2541,7 @@
   });
 
   window.addEventListener("resize", scheduleWorkspaceFit);
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light", false);
   fitWorkspaceToWindow();
 
   loadHoldingRecords();
@@ -2074,6 +2555,7 @@
     loadInputs();
     restoreCurrentHoldingLink();
   }
+  applyMarketPresentation();
   syncRangeFromNumber(sellRange, sellPriceInput);
   syncRangeFromNumber(buyRange, buyPriceInput);
   update();

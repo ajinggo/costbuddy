@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>costbuddy（小算盘）试用说明书</title><style>
+:root{--ink:#172033;--muted:#5d687a;--line:#dfe3ea;--soft:#f5f7fb;--brand:#3067e8;--buy:#2368d8;--sell:#df7a2d}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#eef1f6;color:var(--ink);font:16px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.page{width:min(960px,calc(100% - 32px));margin:32px auto;background:#fff;border:1px solid #e2e6ed;border-radius:22px;box-shadow:0 20px 70px rgba(27,39,61,.1);overflow:hidden}
+.hero{text-align:center;padding:54px 28px 42px;background:linear-gradient(145deg,#f8faff,#fff 55%,#f7f9fd);border-bottom:1px solid var(--line)}
+.brand{display:inline-block;font-size:15px;font-weight:900;letter-spacing:.17em;color:var(--brand);text-transform:lowercase}.hero h1{margin:7px 0 3px;font-size:42px;line-height:1.15;letter-spacing:-.04em}.subtitle{margin:8px 0 18px;color:var(--muted);font-size:18px}.hero p{margin:9px 0}.hero a{display:inline-block;margin:0 4px;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);text-decoration:none;font-weight:700}
+.content{padding:38px 58px 64px}h2{margin:48px 0 18px;padding-top:4px;font-size:27px;line-height:1.3;letter-spacing:-.02em;border-top:1px solid var(--line);padding-top:32px}h2:first-of-type{margin-top:8px;border-top:0;padding-top:0}h3{margin:28px 0 10px;font-size:19px;line-height:1.4}p{margin:10px 0 15px;color:#2c374a}a{color:var(--brand)}strong{color:#121a28}ul,ol{margin:10px 0 20px;padding-left:24px}li{margin:6px 0;color:#2f3a4c}blockquote{margin:18px 0;padding:15px 18px;border-left:4px solid var(--brand);border-radius:0 12px 12px 0;background:#f2f6ff;color:#33415a}pre{overflow:auto;margin:16px 0 22px;padding:18px 20px;border-radius:14px;background:#172033;color:#f2f5fa;font:14px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace}code{padding:.15em .38em;border-radius:5px;background:#eef2f8;font:90% ui-monospace,SFMono-Regular,Menlo,monospace}pre code{padding:0;background:none}.table-wrap{overflow:auto;margin:15px 0 24px;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:580px}th,td{padding:11px 14px;border-bottom:1px solid #e8ebf0;text-align:left}th{background:#f6f8fb;font-size:14px;color:#344054}td{color:#374154}tbody tr:last-child td{border-bottom:0}.check{display:inline-block;width:24px;color:var(--brand);font-weight:800}hr{border:0;border-top:1px solid var(--line);margin:0}
+@media(max-width:700px){body{font-size:15px}.page{width:100%;margin:0;border:0;border-radius:0}.hero{padding:40px 20px 32px}.hero h1{font-size:34px}.content{padding:28px 22px 50px}h2{font-size:23px;margin-top:38px}}
+</style></head>
+<body><main class="page"><article class="content"><header class="hero"><span class="brand">costbuddy</span><h1>小算盘试用说明书</h1>
+<p class="subtitle">港股持仓资金回本成本测算工具</p>
+<p><strong>文档版本：2026-07-28</strong></p>
+<p><a href="https://costbuddy.space" target="_blank" rel="noopener">正式网站</a> · <a href="https://ajinggo.github.io/costbuddy/" target="_blank" rel="noopener">GitHub Pages 备用入口</a></p></header>
+<hr>
+<h2 id="1-产品用途">1. 产品用途</h2>
+<p>costbuddy 用于测算港股持仓在计划卖出、继续买入以及计入交易费用后的<strong>资金回本成本</strong>。</p>
+<p>它可以帮助试用者快速回答以下问题：</p>
+<ul><li>卖出部分持仓后，剩余股票需要涨到多少才能收回全部资金？</li><li>在某个价格继续买入后，新的资金回本成本是多少？</li><li>本次买卖会净收回资金，还是需要追加投入？</li><li>如果希望把回本成本降到目标价格，大约需要买入多少股、多少手？</li><li>买入 1 至 5 手时，各方案需要投入多少资金，成本分别是多少？</li><li>如何保存多只股票，并在其他电脑继续测算？</li></ul>
+<blockquote>本工具计算的是包含已实现卖出盈亏影响的“资金回本成本”，可能与券商 App 按成交批次显示的账面平均成本不同。</blockquote>
+<h2 id="2-试用前准备">2. 试用前准备</h2>
+<p>建议提前准备以下数据：</p>
+<div class="table-wrap"><table><thead><tr><th>数据</th><th>填写说明</th></tr></thead><tbody><tr><td>股票代码</td><td>例如 <code>00700</code>；纯数字代码会自动补足为 5 位</td></tr><tr><td>股票名称</td><td>可选，用于持仓簿中识别股票</td></tr><tr><td>目前股数</td><td>交易前实际持有的股票数量</td></tr><tr><td>目前成本</td><td>当前每股持仓成本，单位为 HKD</td></tr><tr><td>目前股价</td><td>用于估算当前总体盈亏和距离回本的幅度</td></tr><tr><td>每手股数</td><td>请以该证券实际每手股数为准</td></tr><tr><td>买入计划</td><td>计划买入价格、股数和费用</td></tr><tr><td>卖出计划</td><td>计划卖出价格、股数和费用</td></tr><tr><td>目标成本</td><td>希望达到的每股资金回本成本</td></tr></tbody></table></div>
+<p>推荐使用电脑端浏览器。页面采用一屏三列工作台设计，窗口较小时会自动适配缩放。</p>
+<h2 id="3-页面结构">3. 页面结构</h2>
+<h3 id="3-1-顶部操作区">3.1 顶部操作区</h3>
+<p>顶部提供以下操作：</p>
+<ul><li><strong>持仓簿</strong>：查看和管理已保存的多只股票</li><li><strong>新建测算</strong>：清空当前股票参数，开始下一只股票的计算</li><li><strong>本股方案</strong>：保存方案 A / B 并进行对比</li><li><strong>分享</strong>：复制包含当前测算参数的分享链接</li><li><strong>复制结果</strong>：复制当前完整测算结果</li><li><strong>恢复示例</strong>：恢复内置试用数据，需要在 3 秒内再次点击确认</li></ul>
+<h3 id="3-2-交易参数区">3.2 交易参数区</h3>
+<p>页面左侧用于录入：</p>
+<ol><li>持仓基准</li><li>买入计划</li><li>卖出计划</li><li>手动或自动费用设置</li></ol>
+<p>修改任意有效参数后，右侧结果会实时更新，无需点击“计算”。</p>
+<h3 id="3-3-结果工作区">3.3 结果工作区</h3>
+<p>结果区域主要包括：</p>
+<ul><li><strong>资金回本成本</strong>：完成计划交易后的核心结果</li><li><strong>本次买卖净现金流</strong>：卖出净所得减去买入总支出</li><li><strong>交易结果摘要</strong>：交易后持仓、待收回总成本、总体盈亏和回本距离</li><li><strong>回本成本演变</strong>：按交易前、卖出后、买入后的顺序展示成本变化</li><li><strong>目标成本反推</strong>：计算达到目标所需的理论股数和最少整手方案</li><li><strong>1 至 5 手买入方案</strong>：比较不同手数的投入和新成本</li><li><strong>目前股价与回本价</strong>：对比市场价格和资金回本价格</li><li><strong>资金明细</strong>：拆分原始成本、卖出净收回、买入总支出和手续费</li><li><strong>买入价与回本成本</strong>：观察买入价格变化对新回本成本的影响</li></ul>
+<h2 id="4-三分钟快速试用">4. 三分钟快速试用</h2>
+<h3 id="第一步-打开网站">第一步：打开网站</h3>
+<p>访问：</p>
+<pre><code class="language-text">https://costbuddy.space</code></pre>
+<p>网页无需安装、注册或登录。</p>
+<h3 id="第二步-恢复内置示例">第二步：恢复内置示例</h3>
+<p>如果页面数据已被修改：</p>
+<ol><li>点击右上角的“恢复示例”</li><li>按钮会变为“再次确认”</li><li>在 3 秒内再次点击</li></ol>
+<p>内置示例参数如下：</p>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>示例值</th></tr></thead><tbody><tr><td>目前股数</td><td>600 股</td></tr><tr><td>目前成本</td><td>HK$94.00 / 股</td></tr><tr><td>目前股价</td><td>HK$49.00 / 股</td></tr><tr><td>每手股数</td><td>100 股</td></tr><tr><td>买入计划</td><td>100 股 × HK$49.00</td></tr><tr><td>买入费用</td><td>HK$18.50</td></tr><tr><td>卖出计划</td><td>100 股 × HK$60.00</td></tr><tr><td>卖出费用</td><td>HK$18.50</td></tr><tr><td>目标成本</td><td>HK$90.00 / 股</td></tr></tbody></table></div>
+<h3 id="第三步-核对示例结果">第三步：核对示例结果</h3>
+<p>恢复示例后，应看到接近以下结果：</p>
+<div class="table-wrap"><table><thead><tr><th>结果</th><th>预期值</th></tr></thead><tbody><tr><td>资金回本成本</td><td>HK$92.23 / 股</td></tr><tr><td>本次买卖净现金流</td><td>净收回 HK$1,063.00</td></tr><tr><td>交易后持仓</td><td>600 股</td></tr><tr><td>需要收回的总成本</td><td>HK$55,337.00</td></tr><tr><td>按目前股价的总体盈亏</td><td>−HK$25,937.00</td></tr><tr><td>目前股价距回本</td><td>+88.22%</td></tr><tr><td>卖出后回本成本</td><td>HK$100.84 / 股</td></tr></tbody></table></div>
+<p>出现几分钱的显示差异时，应先确认输入的小数位和费用设置是否一致。</p>
+<h3 id="第四步-改变买入或卖出价格">第四步：改变买入或卖出价格</h3>
+<p>可以使用两种方式修改价格：</p>
+<ul><li>拖动价格滑杆，快速观察结果变化</li><li>直接在价格框输入精确值</li></ul>
+<p>建议分别尝试：</p>
+<ol><li>降低买入价格，观察新回本成本是否下降</li><li>提高卖出价格，观察卖出后成本与净现金流变化</li><li>将某一侧交易股数改为 <code>0</code>，确认该侧手续费不会计入</li></ol>
+<h3 id="第五步-试用目标成本反推">第五步：试用目标成本反推</h3>
+<p>在“目标成本反推”中输入目标价格，例如 <code>90</code>。</p>
+<p>系统会显示：</p>
+<ul><li>理论需要买入的股数</li><li>按每手股数向上取整后的最少手数</li><li>对应预计投入</li><li>应用该方案后的实际新成本</li></ul>
+<p>点击“应用方案”后，建议的整手股数会写入买入计划，并触发整页重新计算。</p>
+<blockquote>当买入价格不低于目标成本时，继续买入只能让成本逐渐接近买入价，无法摊薄到更低的目标，页面会给出相应提示。</blockquote>
+<h3 id="第六步-比较-1-至-5-手方案">第六步：比较 1 至 5 手方案</h3>
+<p>在“1 至 5 手买入方案”表格中，可以查看每个方案的：</p>
+<ul><li>买入手数</li><li>对应股数</li><li>总投入</li><li>新回本成本</li></ul>
+<p>点击某一行的应用按钮，即可把该方案写入买入股数。</p>
+<h2 id="5-完整操作方法">5. 完整操作方法</h2>
+<h3 id="5-1-填写持仓基准">5.1 填写持仓基准</h3>
+<ol><li>输入股票代码和名称</li><li>输入目前股数</li><li>输入目前每股成本</li><li>输入目前股价</li><li>确认每手股数</li></ol>
+<p>注意：</p>
+<ul><li>目前股数必须大于 <code>0</code></li><li>股数和每手股数必须填写整数</li><li>每手股数请按照具体证券的交易单位填写</li><li>目前股价不会改变回本成本本身，但会影响总体盈亏和回本距离</li></ul>
+<h3 id="5-2-填写买入计划">5.2 填写买入计划</h3>
+<p>依次填写：</p>
+<ul><li>买入价格</li><li>买入股数</li><li>买入费用</li></ul>
+<p>买入费用会计入本次买入总支出，从而影响资金回本成本。</p>
+<p>如果没有买入计划，请将买入股数设为 <code>0</code>。此时即使费用框保留了数值，该侧费用也不会计入结果。</p>
+<h3 id="5-3-填写卖出计划">5.3 填写卖出计划</h3>
+<p>依次填写：</p>
+<ul><li>卖出价格</li><li>卖出股数</li><li>卖出费用</li></ul>
+<p>卖出净所得的计算方式为：</p>
+<pre><code class="language-text">卖出净所得 = 卖出股数 × 卖出价格 − 卖出费用</code></pre>
+<p>如果没有卖出计划，请将卖出股数设为 <code>0</code>。卖出股数不能超过目前持仓。</p>
+<h3 id="5-4-理解净现金流">5.4 理解净现金流</h3>
+<pre><code class="language-text">净现金流 = 卖出净所得 − 买入总支出</code></pre>
+<ul><li>显示“净收回”表示本次计划整体有现金流入</li><li>显示“净投入”表示本次计划整体需要追加资金</li></ul>
+<p>净现金流只描述本次计划的资金进出，不代表整笔持仓已经盈利。</p>
+<h2 id="6-交易费用设置">6. 交易费用设置</h2>
+<p>点击交易参数区顶部的“费用：手动”或“费用：自动”按钮，打开费用设置。</p>
+<h3 id="6-1-手动填写">6.1 手动填写</h3>
+<p>适合已经从券商预估单或历史成交单中获得较准确费用的情况。</p>
+<p>操作方法：</p>
+<ol><li>选择“手动填写”</li><li>点击“应用设置”</li><li>在买入费用和卖出费用框中填写预计金额</li></ol>
+<h3 id="6-2-自动估算">6.2 自动估算</h3>
+<p>自动模式可设置：</p>
+<ul><li>证券类型：普通港股、印花税豁免或自定义</li><li>券商佣金率</li><li>每笔最低佣金</li><li>是否计入股票印花税</li><li>是否计入交收费估算</li></ul>
+<p>页面还会展示买入和卖出费用预估。完成设置后，点击“应用设置”。</p>
+<p>注意：</p>
+<ul><li>自动费用按每一侧作为一笔订单估算</li><li><code>1 至 5</code> 手方案表中的每个方案均按一笔买单计费</li><li>不同券商、证券类型和成交方式可能采用不同收费标准</li><li>ETF 等证券是否豁免印花税，应以实际证券和成交单为准</li><li>自动费用只用于快速测算，不应代替券商最终费用</li></ul>
+<h2 id="7-结果解读">7. 结果解读</h2>
+<h3 id="7-1-资金回本成本">7.1 资金回本成本</h3>
+<p>计算公式为：</p>
+<pre><code class="language-text">资金回本成本 =
+[
+  原持仓股数 × 目前成本
+  −（卖出股数 × 卖出价格 − 卖出费用）
+  +（买入股数 × 买入价格 + 买入费用）
+]
+÷ 交易后持仓股数</code></pre>
+<p>其中：</p>
+<pre><code class="language-text">交易后持仓股数 = 目前股数 − 卖出股数 + 买入股数</code></pre>
+<h3 id="7-2-回本成本演变">7.2 回本成本演变</h3>
+<ul><li><strong>交易前</strong>：目前持仓成本</li><li><strong>卖出后</strong>：将卖出净所得冲减待收回资金后，剩余持仓对应的回本成本</li><li><strong>买入后</strong>：再加入买入总支出后的最终回本成本</li></ul>
+<p>卖出后成本上升并不一定表示计算错误。低于原成本卖出时，已经实现的亏损需要由剩余持仓继续收回，因此剩余持仓的资金回本成本可能升高。</p>
+<h3 id="7-3-总体盈亏">7.3 总体盈亏</h3>
+<p>总体盈亏按照目前股价估算：</p>
+<pre><code class="language-text">总体盈亏 = 交易后持仓股数 × 目前股价 − 需要收回的总成本</code></pre>
+<p>该数值用于模拟计划交易完成后的持仓状态，不是实际成交盈亏确认。</p>
+<h3 id="7-4-回本距离">7.4 回本距离</h3>
+<p>“目前股价距回本”表示目前股价还需要上涨或下跌多少百分比，才能达到资金回本成本。</p>
+<h2 id="8-保存方案-a-b">8. 保存方案 A / B</h2>
+<p>当需要比较两种操作计划时：</p>
+<ol><li>设置第一组买卖参数</li><li>点击顶部“本股方案”</li><li>在方案 A 中点击“保存当前”</li><li>返回页面，修改买卖价格、股数或费用</li><li>再次打开“本股方案”</li><li>在方案 B 中点击“保存当前”</li></ol>
+<p>保存两组方案后，页面会比较：</p>
+<ul><li>回本成本差异</li><li>净资金流差异</li><li>交易后持仓</li><li>交易费用</li></ul>
+<p>可以点击“载入”恢复某一组完整参数，也可以点击“清除”删除该方案。</p>
+<p>每只已保存持仓拥有自己独立的方案 A / B，切换股票时不会与其他持仓混用。</p>
+<h2 id="9-使用持仓簿管理多只股票">9. 使用持仓簿管理多只股票</h2>
+<h3 id="9-1-保存当前股票">9.1 保存当前股票</h3>
+<ol><li>至少填写股票代码或股票名称</li><li>完成交易参数设置</li><li>点击交易参数区顶部的“保存当前”</li></ol>
+<p>保存后，持仓簿会记录：</p>
+<ul><li>股票代码和名称</li><li>目前持仓</li><li>目前成本</li><li>当前股价</li><li>当前资金回本成本</li><li>最近更新时间</li><li>本股方案与费用设置</li></ul>
+<h3 id="9-2-开始下一只股票">9.2 开始下一只股票</h3>
+<p>点击顶部“新建测算”。如果当前内容存在未保存修改，系统会提供：</p>
+<ul><li><strong>保存并新建</strong>：先保存当前数据，再打开空白测算</li><li><strong>不保存，直接新建</strong>：放弃当前修改并清空页面</li><li><strong>取消</strong>：返回当前测算</li></ul>
+<p>新建测算会清空股票和交易参数，同时保留费用模式偏好与默认每手股数。</p>
+<h3 id="9-3-继续以前的测算">9.3 继续以前的测算</h3>
+<ol><li>点击顶部“持仓簿”</li><li>找到需要继续的股票</li><li>点击“继续测算”</li></ol>
+<p>如需删除记录，第一次点击“删除”后按钮会变为确认状态，再次确认才会删除。</p>
+<h2 id="10-换电脑继续使用">10. 换电脑继续使用</h2>
+<p>持仓、方案和费用设置默认只保存在当前浏览器。换电脑时建议使用 JSON 备份迁移。</p>
+<h3 id="10-1-在原电脑导出">10.1 在原电脑导出</h3>
+<ol><li>打开“持仓簿”</li><li>点击“导出备份”</li><li>保存浏览器下载的 JSON 文件</li><li>通过可信方式把文件传到另一台电脑</li></ol>
+<h3 id="10-2-在新电脑导入">10.2 在新电脑导入</h3>
+<ol><li>在新电脑打开 costbuddy</li><li>打开“持仓簿”</li><li>点击“导入备份”</li><li>选择之前导出的 JSON 文件</li><li>查看导入摘要</li><li>点击“确认导入并替换”</li></ol>
+<blockquote>导入会替换新电脑当前浏览器中的持仓簿、当前测算、方案和费用设置。导入前如已有重要数据，请先导出备份。</blockquote>
+<h2 id="11-复制与分享">11. 复制与分享</h2>
+<h3 id="11-1-复制结果">11.1 复制结果</h3>
+<p>点击“复制结果”，系统会把当前股票信息、交易参数和主要测算结果复制到剪贴板，适合粘贴到备忘录或聊天工具中。</p>
+<h3 id="11-2-分享方案">11.2 分享方案</h3>
+<p>点击“分享”，系统会复制一个带有当前参数的网页链接。接收者打开后，可以还原：</p>
+<ul><li>股票信息</li><li>持仓参数</li><li>买卖计划</li><li>目标成本</li><li>费用模式和费用设置</li></ul>
+<p>分享链接不包含登录账户或身份信息，但会包含当前股票和交易参数。发送前请确认这些参数可以被接收者查看。</p>
+<h2 id="12-常见提示与处理方法">12. 常见提示与处理方法</h2>
+<div class="table-wrap"><table><thead><tr><th>页面提示或现象</th><th>原因</th><th>处理方法</th></tr></thead><tbody><tr><td>目前股数必须大于 0</td><td>当前持仓为 0</td><td>填写实际持仓股数</td></tr><tr><td>股数和每手股数请填写整数</td><td>输入了小数股数</td><td>改为整数</td></tr><tr><td>成本、股价、股数和手续费不能为负数</td><td>某项输入小于 0</td><td>检查并改为 0 或正数</td></tr><tr><td>卖出股数不能超过目前持仓</td><td>计划卖出数量过大</td><td>降低卖出股数</td></tr><tr><td>交易后持仓必须大于 0 股</td><td>卖出后未保留股票且未买入</td><td>保留至少 1 股或增加买入股数</td></tr><tr><td>目标成本必须大于 0</td><td>目标成本为 0 或负数</td><td>输入有效目标价格</td></tr><tr><td>无法摊薄至目标</td><td>买入价不低于目标成本</td><td>降低目标要求或修改买入价格</td></tr><tr><td>无法保存到持仓簿</td><td>未填写股票代码和名称</td><td>至少填写其中一项</td></tr><tr><td>刷新后记录消失</td><td>浏览器网站数据被清除或使用了隐私模式</td><td>使用普通窗口，并定期导出备份</td></tr><tr><td>自动费用与成交单不同</td><td>券商或证券收费规则不同</td><td>以成交单为准，改用手动费用</td></tr></tbody></table></div>
+<h2 id="13-建议试用检查清单">13. 建议试用检查清单</h2>
+<p>完成一次试用后，可以按以下项目检查：</p>
+<ul><li><span class="check">□</span>输入参数后，结果是否能实时更新</li><li><span class="check">□</span>买入和卖出价格滑杆是否容易使用</li><li><span class="check">□</span>回本成本演变是否容易理解</li><li><span class="check">□</span>资金明细是否能解释最终结果</li><li><span class="check">□</span>目标成本反推是否符合预期</li><li><span class="check">□</span><code>1 至 5</code> 手方案是否便于比较</li><li><span class="check">□</span>方案 A / B 是否可以正确保存和载入</li><li><span class="check">□</span>持仓簿是否能保存并恢复多只股票</li><li><span class="check">□</span>页面刷新后，本地输入是否仍然保留</li><li><span class="check">□</span>JSON 备份能否成功导出和导入</li><li><span class="check">□</span>复制结果和分享链接是否正常</li><li><span class="check">□</span>当前窗口尺寸下，三列布局和分界线是否完整显示</li></ul>
+<p>反馈问题时，建议同时记录：浏览器名称、窗口尺寸、输入参数、费用模式、预期结果和实际结果。请避免公开真实账户、成交单号或其他敏感信息。</p>
+<h2 id="14-数据与隐私">14. 数据与隐私</h2>
+<ul><li>所有计算均在浏览器本地完成</li><li>持仓簿、方案和输入默认保存在当前浏览器的 LocalStorage 中</li><li>本地数据不会自动上传到 costbuddy 服务器</li><li>清除浏览器数据、使用隐私窗口或更换浏览器，可能导致记录无法继续读取</li><li>建议定期导出 JSON 备份</li></ul>
+<h2 id="15-免责声明">15. 免责声明</h2>
+<p>结果仅用于持仓测算，不构成投资建议；暂不包含汇率及其他费用。自动费用仅为估算，应以交易所、监管机构及实际券商成交单为准。使用者应自行核对输入数据、证券交易单位和费用标准，并独立判断交易风险。</p></article></main></body></html>
