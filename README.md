@@ -8,6 +8,8 @@
 
 [**立即使用 costbuddy.space**](https://costbuddy.space) · [GitHub Pages 备用入口](https://ajinggo.github.io/costbuddy/)
 
+[试用说明书](USER_GUIDE.md) · [网页版说明书](https://costbuddy.space/USER_GUIDE.html)
+
 纯前端 · 本地计算 · 无需注册 · 数据不上云
 
 </div>
