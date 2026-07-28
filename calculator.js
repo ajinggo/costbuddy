@@ -245,7 +245,7 @@
       return;
     }
 
-    var scale = Math.min(1, viewportWidth / WORKSPACE_MIN_WIDTH, viewportHeight / WORKSPACE_MIN_HEIGHT);
+    var scale = Math.min(1, viewportWidth / WORKSPACE_MIN_WIDTH);
     var shouldFit = scale < 0.9995;
     var workspaceWidth = shouldFit ? viewportWidth / scale : viewportWidth;
     var workspaceHeight = shouldFit ? viewportHeight / scale : viewportHeight;

@@ -1966,8 +1966,8 @@ input[type="range"]::-webkit-slider-thumb {
   }
 }
 
-/* Scale the desktop workspace down only when the browser window is smaller than
-   the complete one-screen layout. Dialogs stay at native size for readability. */
+/* Keep the legacy fit hook isolated from native-flow desktop windows.
+   Dialogs always stay at native size for readability. */
 body.is-window-fitted .app-shell {
   position: fixed;
   top: 0;
@@ -5358,7 +5358,7 @@ html[data-theme="dark"] .breakdown .section-title-row > span {
 @media (min-width: 2200px) and (min-height: 1200px) {
   .stage-section { overflow: hidden; }
   .stage-section .stage-grid { height: calc(100% - 49px); }
-  .chart-section #costChart { height: calc(100% - 66px); }
+  .chart-section #costChart { height: calc(100% - 68px); }
   .comparison-section { overflow: hidden; }
   .comparison-section .table-scroll { height: calc(100% - 56px); }
 }
@@ -5610,7 +5610,8 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
 }
 
 /* Final three-column desktop refinement: refined finance shell with terminal-grade data clarity. */
-@media (min-width: 1200px) and (min-height: 521px) {
+@media (min-width: 1200px) and (max-width: 2199px) and (min-height: 521px),
+       (min-width: 2200px) and (min-height: 521px) and (max-height: 1199px) {
   .dashboard {
     row-gap: 10px;
     padding: 0 12px 12px;
@@ -5939,9 +5940,17 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
     grid-template-columns: minmax(560px, 1.68fr) 1px minmax(330px, 1fr);
     column-gap: 10px;
   }
+
+  .result-main-column {
+    grid-template-rows: 142px 70px 108px minmax(250px, 1fr);
+  }
 }
 
 @media (min-width: 1200px) and (min-height: 521px) {
+  body[data-market="us"] .position-input-grid .basis-field-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.24fr);
+  }
+
   html[data-theme="dark"] .dashboard,
   html[data-theme="dark"] .control-section,
   html[data-theme="dark"] .result-hero,

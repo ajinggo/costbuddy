@@ -238,7 +238,7 @@ npm install
 npm run test:responsive
 ```
 
-检查覆盖 `1093x700` 分页模式、`1200x800` 三列边界、`1280x720` 与 `1366x768` 笔记本工作台，以及标准桌面、2K、4K 的日间/夜间模式和主要弹窗。测试截图保存在本地 `test-artifacts/responsive/`，不会提交到仓库。
+检查覆盖 `1093x700` 分页模式、`1200x800` 三列及美股边界、`1280x600` 短窗口滚动、`1280x720` 与 `1366x768` 笔记本工作台，以及标准桌面、2K、4K 的日间/夜间模式和主要弹窗。测试截图保存在本地 `test-artifacts/responsive/`，不会提交到仓库。
 
 <details>
 <summary><strong>查看项目结构</strong></summary>
