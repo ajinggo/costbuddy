@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./assets/readme-cover.svg" alt="CostBuddy 小算盘 — 港股与美股持仓回本成本测算工具" width="100%" />
+<img src="./assets/github-social-preview.svg" alt="CostBuddy 小算盘 — 港股与美股持仓回本成本测算工具" width="100%" />
 
 <br />
 
@@ -236,9 +236,11 @@ http://localhost:8765/
 ```text
 .
 ├── assets/
-│   ├── readme-cover.svg   # README 品牌封面
-│   ├── product-desktop.jpg # 日间产品界面
-│   └── product-dark.jpg    # 夜间产品界面
+│   ├── github-social-preview.svg # GitHub / README 品牌封面源文件
+│   ├── github-social-preview.png # GitHub 社交分享预览图（1280 × 640）
+│   ├── readme-cover.svg          # 备用品牌封面
+│   ├── product-desktop.jpg       # 日间产品界面
+│   └── product-dark.jpg          # 夜间产品界面
 ├── index.html            # 页面结构与内容
 ├── styles.css            # 响应式、日间和夜间样式
 ├── calculator.js         # 计算、持仓、方案、备份与分享逻辑
