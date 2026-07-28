@@ -5571,7 +5571,7 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
 }
 
 /* Short desktop windows scroll instead of compressing the work surface below readability. */
-@media (min-width: 1200px) and (max-height: 700px) {
+@media (min-width: 1200px) and (max-height: 720px) {
   html,
   body {
     height: auto;
@@ -5606,5 +5606,312 @@ html[data-theme="dark"] .comparison-section .table-action:not(:disabled) {
 @media (max-height: 700px) {
   .app-dialog {
     max-height: calc(100vh - 20px);
+  }
+}
+
+/* Final three-column desktop refinement: refined finance shell with terminal-grade data clarity. */
+@media (min-width: 1200px) and (min-height: 521px) {
+  .dashboard {
+    row-gap: 10px;
+    padding: 0 12px 12px;
+    border-color: #dfe3ec;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(16, 24, 40, .07);
+  }
+
+  .app-header {
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .header-actions,
+  .controls-header,
+  .controls-header-tools,
+  .result-column,
+  .result-column > *,
+  .section-title-row,
+  .section-title-row > div {
+    min-width: 0;
+  }
+
+  .controls {
+    grid-template-rows: 66px minmax(0, .94fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .controls-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 30px;
+    align-content: start;
+    gap: 7px;
+    padding: 0 2px 8px;
+  }
+
+  .controls-header > div:first-child {
+    justify-content: flex-start;
+    gap: 9px;
+  }
+
+  .controls-header-tools {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1.15fr 1fr .82fr;
+    gap: 6px;
+  }
+
+  .save-holding-button,
+  .fee-mode-button,
+  .clear-plan-control,
+  .clear-plan-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .save-holding-button,
+  .fee-mode-button,
+  .clear-plan-button {
+    height: 30px;
+    justify-content: center;
+    padding-inline: 7px;
+    border-radius: 7px;
+  }
+
+  .control-section,
+  .result-hero,
+  .stage-section,
+  .chart-section,
+  .target-plan,
+  .comparison-section,
+  .price-position,
+  .breakdown,
+  .metric-grid {
+    border-color: #dfe3ec;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  .control-section {
+    padding: 10px 11px 11px;
+  }
+
+  .result-column {
+    gap: 9px;
+  }
+
+  .result-main-column {
+    grid-template-rows: 136px 70px 108px minmax(250px, 1fr);
+  }
+
+  .result-side-column {
+    grid-template-rows: 84px 160px minmax(214px, 1fr) 148px;
+  }
+
+  .result-hero {
+    grid-template-columns: minmax(0, 1.42fr) minmax(160px, .7fr);
+    gap: 14px;
+    padding: 15px 16px;
+    border-left: 3px solid var(--blue);
+    background: rgba(83, 111, 240, .025);
+  }
+
+  .hero-number span {
+    font-size: clamp(46px, 4vw, 56px);
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cashflow-card {
+    padding: 10px 4px 10px 15px;
+    border-left-color: #dfe3ec;
+  }
+
+  .metric-grid {
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .metric-grid .metric {
+    justify-content: center;
+    padding: 10px 9px;
+    border: 0;
+    border-right: 1px solid #e7eaf0;
+    border-radius: 0;
+  }
+
+  .metric-grid .metric:last-child {
+    border-right: 0;
+  }
+
+  .metric-icon {
+    display: none;
+  }
+
+  .target-plan,
+  .stage-section,
+  .chart-section,
+  .comparison-section,
+  .price-position,
+  .breakdown {
+    padding: 11px 12px;
+  }
+
+  .section-title-row {
+    gap: 8px;
+    margin-bottom: 9px;
+  }
+
+  .controls-header .panel-kicker,
+  .section-title-row .panel-kicker,
+  .brand-group .eyebrow,
+  .app-header h1,
+  .controls-header h2,
+  .section-title-row h2 {
+    letter-spacing: 0;
+  }
+
+  .section-title-row > span,
+  #positionSummary,
+  #comparisonMeta {
+    min-width: 0;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stage-section .stage-grid {
+    overflow: hidden;
+    border-color: #e7eaf0;
+    border-radius: 7px;
+  }
+
+  .result-main-column .stage-card {
+    border-radius: 0;
+  }
+
+  .price-position {
+    border-top: 3px solid var(--blue);
+  }
+
+  .position-track {
+    height: 6px;
+  }
+
+  .comparison-section .table-scroll {
+    height: calc(100% - 32px);
+  }
+
+  .comparison-table {
+    table-layout: fixed;
+  }
+
+  .comparison-table :is(th, td):nth-child(1) { width: 15%; }
+  .comparison-table :is(th, td):nth-child(2) { width: 17%; text-align: right; }
+  .comparison-table :is(th, td):nth-child(3) { width: 29%; text-align: right; }
+  .comparison-table :is(th, td):nth-child(4) { width: 24%; text-align: right; }
+  .comparison-table :is(th, td):nth-child(5) { width: 15%; text-align: right; }
+
+  .comparison-table th,
+  .comparison-table td {
+    border-bottom-color: #e7eaf0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  :is(
+    #newDilutedCost,
+    #netCashFlow,
+    #finalShares,
+    #recoverableCost,
+    #totalPnl,
+    #breakEvenGap,
+    #beforeStageCost,
+    #afterSellStageCost,
+    #afterBuyStageCost,
+    #targetPlanShares,
+    #targetPlanOutlay,
+    #targetPlanActualCost,
+    #positionSummary,
+    #originalBasis,
+    #netSaleProceeds,
+    #buyOutlay,
+    #totalFees
+  ) {
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .breakdown dl > div {
+    padding-block: 5px;
+    border-bottom-color: #e7eaf0;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1439px) and (min-height: 521px) {
+  .dashboard {
+    grid-template-columns: clamp(294px, 25.4vw, 322px) 1px minmax(0, 1fr);
+    column-gap: 8px;
+  }
+
+  .results {
+    grid-template-columns: minmax(500px, 1.72fr) 1px minmax(286px, .96fr);
+    column-gap: 8px;
+  }
+
+  .header-disclaimer {
+    display: none;
+  }
+
+  .app-header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .header-actions {
+    justify-self: end;
+  }
+
+  .local-badge {
+    display: none;
+  }
+}
+
+@media (min-width: 1440px) and (max-width: 2199px) and (min-height: 521px) {
+  .dashboard {
+    grid-template-columns: clamp(330px, 23.5vw, 358px) 1px minmax(0, 1fr);
+    column-gap: 10px;
+  }
+
+  .results {
+    grid-template-columns: minmax(560px, 1.68fr) 1px minmax(330px, 1fr);
+    column-gap: 10px;
+  }
+}
+
+@media (min-width: 1200px) and (min-height: 521px) {
+  html[data-theme="dark"] .dashboard,
+  html[data-theme="dark"] .control-section,
+  html[data-theme="dark"] .result-hero,
+  html[data-theme="dark"] .stage-section,
+  html[data-theme="dark"] .chart-section,
+  html[data-theme="dark"] .target-plan,
+  html[data-theme="dark"] .comparison-section,
+  html[data-theme="dark"] .price-position,
+  html[data-theme="dark"] .breakdown,
+  html[data-theme="dark"] .metric-grid {
+    border-color: var(--line);
+    box-shadow: none;
+  }
+
+  html[data-theme="dark"] .result-hero {
+    background: rgba(29, 155, 240, .035);
+  }
+
+  html[data-theme="dark"] .metric-grid .metric,
+  html[data-theme="dark"] .comparison-table th,
+  html[data-theme="dark"] .comparison-table td,
+  html[data-theme="dark"] .breakdown dl > div {
+    border-color: #263746;
   }
 }
