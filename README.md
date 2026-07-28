@@ -1,119 +1,148 @@
 <div align="center">
 
+<img src="./assets/readme-cover.svg" alt="CostBuddy 小算盘 — 港股与美股持仓回本成本测算工具" width="100%" />
+
+<br />
+
 # CostBuddy
 
-### 小算盘 · 港股 / 美股持仓回本成本测算工具
+### 做 T、加仓、减仓前，先把成本算清楚
 
-**把持仓成本、交易计划和资金变化一次算清。**
+**测算交易后的回本成本，预估不同方案的资金变化，更有效地控制自己的持仓成本。**
 
-[**在线使用 costbuddy.space**](https://costbuddy.space) · [GitHub Pages 备用入口](https://ajinggo.github.io/costbuddy/)
+<p>
+  <a href="https://costbuddy.space"><img alt="在线使用" src="https://img.shields.io/badge/OPEN_APP-costbuddy.space-4F65E8?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
+  <a href="https://costbuddy.space/USER_GUIDE.html"><img alt="使用说明" src="https://img.shields.io/badge/USER_GUIDE-Read_Now-172B4D?style=for-the-badge&logo=readthedocs&logoColor=white"></a>
+</p>
 
-[试用说明书](USER_GUIDE.md) · [网页版说明书](https://costbuddy.space/USER_GUIDE.html)
+<p>
+  <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?style=flat-square&logo=javascript&logoColor=111111">
+  <img alt="No Build" src="https://img.shields.io/badge/Build-No_Build-16A34A?style=flat-square">
+  <img alt="Local First" src="https://img.shields.io/badge/Data-Local_First-2563EB?style=flat-square">
+  <img alt="Responsive" src="https://img.shields.io/badge/UI-Desktop_%7C_Mobile_%7C_4K-7C3AED?style=flat-square">
+  <img alt="Markets" src="https://img.shields.io/badge/Markets-HK%20%7C%20US-EF7B45?style=flat-square">
+</p>
 
-纯前端 · 本地计算 · 无需注册 · 数据默认不上云
+[正式网站](https://costbuddy.space) · [GitHub Pages](https://ajinggo.github.io/costbuddy/) · [试用说明书](USER_GUIDE.md) · [网页版说明书](https://costbuddy.space/USER_GUIDE.html)
 
 </div>
 
 ---
 
-## CostBuddy 是什么？
+## 为什么做 CostBuddy？
 
-**CostBuddy（小算盘）** 是一个面向港股与美股持仓场景的资金回本成本测算工具。
+交易前最难的往往不是按下买入或卖出，而是提前弄清楚：**做完这笔交易后，我的成本到底会变成多少？**
 
-输入目前持仓、账面成本、当前股价和计划买卖参数后，CostBuddy 会即时计算卖出后的剩余资金成本、继续买入后的新回本成本、交易后的持仓与现金变化，并帮助你比较不同加仓方案。
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <h3>🧮 测算</h3>
+      <p>计算做 T、加仓、减仓后的<br><strong>资金回本成本</strong></p>
+    </td>
+    <td width="33%" align="center">
+      <h3>🔭 预估</h3>
+      <p>比较不同价格与股数下的<br><strong>持仓和资金变化</strong></p>
+    </td>
+    <td width="33%" align="center">
+      <h3>🎯 控制</h3>
+      <p>在交易前看清方案，帮助自己<br><strong>更有效地控制成本</strong></p>
+    </td>
+  </tr>
+</table>
 
-> CostBuddy 计算的是包含已实现卖出盈亏影响的“资金回本成本”，不等同于券商按照成交批次或会计口径展示的账面平均成本。
+> CostBuddy 不预测涨跌。它只负责把交易计划和成本变化算得更清楚，让每次操作多一份可量化的参考。
 
-## 在线使用
+## 你可以用它做什么？
 
-| 入口 | 地址 | 用途 |
-| --- | --- | --- |
-| 正式网站 | [costbuddy.space](https://costbuddy.space) | Vercel 生产环境与自定义域名 |
-| GitHub Pages | [ajinggo.github.io/costbuddy](https://ajinggo.github.io/costbuddy/) | 静态备用入口 |
-| Vercel 备用域名 | [costbuddy-six.vercel.app](https://costbuddy-six.vercel.app) | Vercel 项目域名 |
+| 场景 | CostBuddy 可以帮你 |
+| --- | --- |
+| 🔁 **做 T 测算** | 同时输入卖出与买回计划，测算完成一轮交易后的新回本成本 |
+| 📉 **摊薄成本** | 预估不同买入价格、股数和费用对持仓成本的影响 |
+| 📤 **减仓预估** | 查看卖出后剩余持仓需要收回的资金与每股回本成本 |
+| 🎯 **目标反推** | 输入目标成本，反推理论买入股数和港股最少整手方案 |
+| 🧩 **方案比较** | 对比 1–5 手方案，保存方案 A / B 后查看资金与成本差异 |
+| 📚 **多股管理** | 使用持仓簿保存多只股票，随时继续下一次测算 |
+| 💾 **跨设备使用** | 通过 JSON 导出 / 导入，在另一台电脑继续计算 |
 
-无需安装或登录，打开网页即可开始测算。页面不提供实时行情，股价、成本和交易费用均由用户自行输入或设置。
+## 30 秒开始测算
+
+<div align="center">
+
+`输入当前持仓`　→　`设置买卖计划`　→　`查看回本成本`　→　`比较方案后再决定`
+
+</div>
+
+1. 选择 **港股 / 美股**。
+2. 输入目前股数、目前成本和当前股价。
+3. 填写计划买入或卖出的价格、股数与费用。
+4. 查看回本成本、资金明细、目标反推和方案比较。
+
+<div align="center">
+  <a href="https://costbuddy.space"><strong>立即打开 CostBuddy →</strong></a>
+</div>
 
 ## 核心功能
 
-### 1. 港股 / 美股双市场
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>📊 成本与资金</h3>
+      <ul>
+        <li><strong>COST BASIS FLOW</strong> 回本成本演变</li>
+        <li><strong>PRICE / BASIS</strong> 股价与回本价</li>
+        <li><strong>CASH LEDGER</strong> 资金明细</li>
+        <li><strong>MARKET CURVE</strong> 买入价与回本成本</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🧭 计划与方案</h3>
+      <ul>
+        <li><strong>TARGET BASIS</strong> 目标成本反推</li>
+        <li><strong>LOT MATRIX</strong> 1–5 手买入方案</li>
+        <li>方案 A / B 保存和对比</li>
+        <li>买入、卖出或全部计划一键清除</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>💼 持仓与数据</h3>
+      <ul>
+        <li>多股票持仓簿</li>
+        <li>新建空白测算</li>
+        <li>复制结果与分享链接</li>
+        <li>JSON 备份和恢复</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🖥️ 多端体验</h3>
+      <ul>
+        <li>桌面一屏三列工作台</li>
+        <li>手机端输入 / 结果二级页面</li>
+        <li>4K 居中加宽布局</li>
+        <li>高对比日间模式与暗蓝夜间模式</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
-- 在港股与美股测算模式之间切换
-- 港股支持每手股数与整手方案
-- 美股支持按股数计算与美股费用参数
-- 根据市场自动调整货币符号、数量步进和默认示例
-
-### 2. 买入与卖出计划
-
-- 同时测算买入计划、卖出计划，或只测算其中一侧
-- 通过价格滑杆快速观察不同价格下的结果变化
-- 支持精确输入股数、价格和费用
-- 可一键清除买入计划、卖出计划或全部交易计划
-- 当某一侧股数为 `0` 时，该侧手续费不计入结果
-
-### 3. 回本成本与资金结果
-
-- **COST BASIS FLOW**：展示目前成本、卖出后成本和买入后新成本的演变
-- **PRICE / BASIS**：对比目前股价与交易后的回本价
-- **CASH LEDGER**：展示待收回资金、买卖净现金流和资金变化
-- **MARKET CURVE**：查看买入价变化对新回本成本的影响
-- 展示交易后持仓、总体盈亏、回本距离及特殊状态提示
-
-### 4. 目标成本与整手方案
-
-- **TARGET BASIS**：根据目标回本成本反推理论买入股数
-- 港股自动换算达到目标所需的最少整手方案
-- **LOT MATRIX**：比较 `1–5` 手买入所需资金与对应的新回本成本
-- 可将建议方案一键应用到当前买入计划
-
-### 5. 费用设置
+<details>
+<summary><strong>展开查看费用设置</strong></summary>
+<br>
 
 - 支持手动填写买入和卖出费用
 - 支持根据成交金额自动估算费用
-- 港股可设置佣金率、最低佣金、印花税和交收费等参数
+- 港股可设置佣金率、最低佣金、印花税和交收费
 - 美股可设置佣金及相关监管费用参数
-- 自动费用仅用于估算，实际费用应以券商成交单为准
+- 某一侧交易股数为 `0` 时，该侧手续费不计入结果
 
-### 6. 持仓簿与多股票测算
+自动费用仅为估算，实际费用请以券商成交单为准。
 
-- 保存当前股票及测算进度到“持仓簿”
-- 新建空白测算，继续处理下一只股票
-- 在不同股票记录之间切换，避免重复输入
-- 当前输入、费用偏好和部分界面设置自动保存在本地浏览器
-
-### 7. 方案比较与数据携带
-
-- 保存本股方案 A / B
-- 对比两套方案的回本成本、交易后持仓、费用和净资金流
-- 一键复制当前测算结果
-- 生成包含当前参数的分享链接
-- 导出 / 导入 JSON 备份，在另一台设备继续使用
-
-### 8. 支持与反馈
-
-网站“支持”弹窗提供以下联系方式：
-
-- 意见邮箱：`imurio@163.com`，支持一键复制或直接唤起邮件应用
-- 微信号：`idemising`，支持一键复制
-
-打赏完全自愿，不影响任何功能使用。
-
-## 多端界面
-
-CostBuddy 针对不同设备尺寸设计了独立的布局策略：
-
-- **普通桌面 / 笔记本**：一屏三列工作台，集中展示交易参数、核心结果和行动工具
-- **较小窗口**：工作台根据可用宽高自动缩放，分界线限制在内容区域内
-- **4K 屏幕**：使用居中加宽工作台、更大的字体与控件，减少大屏空旷感
-- **手机端**：采用简化的二级页面，在“输入”和“结果”之间切换
-- **日间模式**：使用黑色和碳黑色正文，提高小字号文字对比度
-- **夜间模式**：采用参考 X 风格的暗蓝黑配色，并保存主题偏好
-
-各模块主要通过留白、细线和排版层级区分，不使用大面积独立背景色，尽量保持信息密度与阅读清晰度之间的平衡。
+</details>
 
 ## 计算口径
 
-### 资金回本成本
+CostBuddy 使用“资金回本成本”口径，将已实现的卖出盈亏继续反映到剩余持仓中：
 
 ```text
 资金回本成本 =
@@ -125,95 +154,100 @@ CostBuddy 针对不同设备尺寸设计了独立的布局策略：
 ÷ 交易后持仓股数
 ```
 
-其中：
-
 ```text
 交易后持仓股数 = 原持仓股数 - 卖出股数 + 买入股数
 ```
 
-### 如何理解结果
+| 情况 | 可能产生的结果 |
+| --- | --- |
+| 盈利卖出 | 通常降低后续资金回本成本 |
+| 亏损卖出 | 通常提高后续资金回本成本 |
+| 卖出净所得超过待回收资金 | 回本成本可能为负数 |
+| 完全清仓 | 不再计算剩余持仓的每股回本成本 |
 
-卖出净所得会冲减仍需从剩余持仓中收回的资金，因此：
+> 该结果可能与券商按照成交批次或会计口径展示的账面平均成本不同。
 
-- 盈利卖出通常会降低后续资金回本成本
-- 亏损卖出通常会提高后续资金回本成本
-- 卖出净所得高于剩余待回收资金时，回本成本可能为负数
-- 完全清仓后没有剩余持仓，不再计算每股回本成本
-- 计算结果可能与券商 App 展示的账面平均成本不同
+## 本地优先，数据不上云
 
-## 隐私与数据
+<div align="center">
 
-CostBuddy 是纯前端静态应用，所有计算直接在浏览器中完成：
+**无需注册　·　本地计算　·　LocalStorage 保存　·　支持 JSON 备份**
 
-- 输入、持仓簿、方案与费用设置默认存储在当前浏览器的 `LocalStorage`
-- 本地数据不会由网站自动上传到 CostBuddy 或第三方服务器
-- JSON 备份文件由浏览器直接生成并保存到用户设备
-- 分享链接会包含当前测算参数，请仅在需要时发送给他人
-- 清除浏览器网站数据可能同时删除尚未导出的本地记录
+</div>
+
+- 输入、持仓簿、方案和费用设置默认保存在当前浏览器中
+- 网站不会自动上传你的持仓数据
+- 分享链接会包含当前测算参数，请按需使用
 - 更换电脑或浏览器前，建议先导出 JSON 备份
+- 清除浏览器网站数据可能删除尚未导出的本地记录
 
-## 快速开始
+## 本地运行
 
-### 直接打开
-
-本项目不依赖构建工具。下载仓库后，可以直接使用浏览器打开：
-
-```text
-index.html
-```
-
-### 启动本地静态服务器
-
-在项目目录运行：
+无需安装依赖或执行构建：
 
 ```bash
+git clone https://github.com/ajinggo/costbuddy.git
+cd costbuddy
 python3 -m http.server 8765
 ```
 
-然后访问：
+打开：
 
 ```text
 http://localhost:8765/
 ```
 
-## 文件结构
+也可以直接使用浏览器打开 `index.html`。
+
+<details>
+<summary><strong>查看项目结构</strong></summary>
+<br>
 
 ```text
 .
-├── index.html       # 主页面结构与内容
-├── styles.css       # 日间、夜间、桌面、手机和 4K 响应式样式
-├── calculator.js    # 计算、费用、图表、持仓、方案、备份与分享逻辑
-├── USER_GUIDE.md    # Markdown 试用说明书
-├── USER_GUIDE.html  # 可直接在线阅读的网页版说明书
-├── favicon.svg      # 网站图标
-└── README.md        # 项目介绍与开发说明
+├── assets/
+│   └── readme-cover.svg  # README 品牌封面
+├── index.html            # 页面结构与内容
+├── styles.css            # 响应式、日间和夜间样式
+├── calculator.js         # 计算、持仓、方案、备份与分享逻辑
+├── USER_GUIDE.md         # Markdown 试用说明书
+├── USER_GUIDE.html       # 网页版试用说明书
+├── favicon.svg           # 网站图标
+└── README.md             # 项目说明
 ```
 
-## 技术特点
+</details>
+
+## 技术与部署
+
+<p>
+  <img alt="HTML5" src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white">
+  <img alt="CSS3" src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white">
+  <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=111111">
+  <img alt="Vercel" src="https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white">
+  <img alt="GitHub Pages" src="https://img.shields.io/badge/GitHub_Pages-222222?style=flat-square&logo=github&logoColor=white">
+</p>
 
 - 原生 HTML / CSS / JavaScript
-- 无前端框架、无打包步骤、无安装依赖
-- LocalStorage 本地持久化
-- URL 参数分享当前测算方案
-- JSON 数据备份与恢复
-- Vercel 与 GitHub Pages 双入口发布
+- 无框架、无打包、无安装依赖
+- `main` 分支推送后由 Vercel 自动触发生产部署
+- GitHub Pages 提供静态备用入口
 
-## 发布方式
+## 支持与反馈
 
-### Vercel
+- 意见邮箱：[`imurio@163.com`](mailto:imurio@163.com?subject=CostBuddy%20使用建议)
+- 微信号：`idemising`
 
-正式网站部署于 Vercel，并绑定自定义域名 `costbuddy.space`。
-
-仓库 `main` 分支已连接 Vercel。将更新推送到 `main` 后，Vercel 会自动触发新的生产部署。
-
-### GitHub Pages
-
-GitHub Pages 使用 `main` 分支根目录作为静态站点来源。项目由原生静态文件组成，不需要额外构建命令。
+如果 CostBuddy 对你有帮助，欢迎推荐给需要测算做 T、加仓或摊薄成本的朋友。
 
 ## 风险提示
 
-结果仅用于持仓测算，不构成投资建议；暂不包含汇率及未明确录入的其他费用。自动费用为估算值，应以交易所、监管机构及实际券商成交单为准。市场价格会波动，请独立判断并自行承担交易风险。
+> 结果仅用于持仓测算与方案预估，不构成投资建议；暂不包含汇率及未明确录入的其他费用。自动费用为估算值，应以交易所、监管机构及实际券商成交单为准。
 
-## License
+<div align="center">
 
-如需公开复用、二次分发或用于商业项目，请先联系项目维护者确认授权范围。
+Made for clearer cost decisions · **CostBuddy 小算盘**
+
+[返回顶部](#costbuddy)
+
+</div>
