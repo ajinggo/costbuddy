@@ -1087,8 +1087,7 @@
   }
 
   function updateDocumentTitle(input) {
-    var label = stockLabel(input);
-    document.title = label ? label + " · CostBuddy 你的做T搭子" : "CostBuddy 你的做T搭子";
+    document.title = "CostBuddy 你的做T搭子";
   }
 
   function updateResultInsight(input, result) {
