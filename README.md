@@ -30,13 +30,13 @@
 <br />
 
 <sub>快速导航</sub><br />
-[为什么做它？](#为什么做-costbuddy)　·　[产品界面](#产品界面)　·　[使用场景](#你可以用它做什么)　·　[核心功能](#核心功能)　·　[计算口径](#计算口径)
+[产品理念](#为每一次交易计划多一份把握)　·　[使用场景](#你可以用它做什么)　·　[核心功能](#核心功能)　·　[计算口径](#计算口径)　·　[本地运行](#本地运行)
 
 </div>
 
 ---
 
-## 为什么做 CostBuddy？
+## 为每一次交易计划，多一份把握
 
 交易前最难的往往不是按下买入或卖出，而是提前弄清楚：**做完这笔交易后，我的成本到底会变成多少？**
 
@@ -58,21 +58,6 @@
 </table>
 
 > CostBuddy 不预测涨跌。它只负责把交易计划和成本变化算得更清楚，让每次操作多一份可量化的参考。
-
-## 产品界面
-
-<div align="center">
-  <a href="https://costbuddy.space" title="打开 CostBuddy">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./assets/product-dark.jpg">
-      <source media="(prefers-color-scheme: light)" srcset="./assets/product-desktop.jpg">
-      <img src="./assets/product-desktop.jpg" alt="CostBuddy 桌面端产品界面" width="100%">
-    </picture>
-  </a>
-  <sub>真实产品界面 · 图片会跟随系统深浅色模式切换 · 点击图片进入网站</sub>
-</div>
-
-<br />
 
 <table>
   <tr>
@@ -239,8 +224,7 @@ http://localhost:8765/
 │   ├── github-social-preview.svg # GitHub / README 品牌封面源文件
 │   ├── github-social-preview.png # GitHub 社交分享预览图（1280 × 640）
 │   ├── readme-cover.svg          # 备用品牌封面
-│   ├── product-desktop.jpg       # 日间产品界面
-│   └── product-dark.jpg          # 夜间产品界面
+│   └── ...                       # 网站图标及其他素材
 ├── index.html            # 页面结构与内容
 ├── styles.css            # 响应式、日间和夜间样式
 ├── calculator.js         # 计算、持仓、方案、备份与分享逻辑
