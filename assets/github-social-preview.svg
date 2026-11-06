@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
   <title id="title">CostBuddy 你的做T搭子</title>
-  <desc id="desc">港股与美股做 T、加仓、减仓后的回本成本测算与方案预估</desc>
+  <desc id="desc">支持港股、A股与美股的交易计划测算工具，展示持仓、计划和成本变化流程示意</desc>
   <defs>
     <linearGradient id="bg" x1="36" y1="24" x2="1232" y2="620" gradientUnits="userSpaceOnUse">
       <stop stop-color="#080E1A"/>
@@ -10,11 +10,6 @@
     <linearGradient id="brand" x1="0" y1="0" x2="104" y2="110" gradientUnits="userSpaceOnUse">
       <stop stop-color="#829AFF"/>
       <stop offset="1" stop-color="#4F65E8"/>
-    </linearGradient>
-    <linearGradient id="curve" x1="706" y1="448" x2="1162" y2="344" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7894FF"/>
-      <stop offset="0.58" stop-color="#59C3FF"/>
-      <stop offset="1" stop-color="#65D89A"/>
     </linearGradient>
     <linearGradient id="glass" x1="650" y1="80" x2="1208" y2="572" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFFFF" stop-opacity="0.13"/>
@@ -58,12 +53,12 @@
   </g>
 
   <text x="190" y="112" fill="#FFFFFF" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="47" font-weight="830" letter-spacing="-1.6">CostBuddy</text>
-  <text x="192" y="146" fill="#A9B9DA" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" font-weight="650">你的做T搭子 · COST BASIS CALCULATOR</text>
+  <text x="192" y="146" fill="#A9B9DA" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" font-weight="650">你的做T搭子 · 交易计划测算工具</text>
 
   <!-- Main copy -->
-  <text x="72" y="251" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="42" font-weight="800" letter-spacing="-0.8">做 T 前先测算</text>
-  <text x="72" y="307" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="42" font-weight="800" letter-spacing="-0.8">交易前先预估</text>
-  <text x="74" y="355" fill="#9FB1D5" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20">港股 / 美股 · 做 T · 加仓 · 减仓 · 摊薄成本</text>
+  <text x="72" y="251" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="42" font-weight="800" letter-spacing="-0.8">交易计划先算清</text>
+  <text x="72" y="307" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="42" font-weight="800" letter-spacing="-0.8">持仓成本再决定</text>
+  <text x="74" y="355" fill="#9FB1D5" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20">港股 · A 股 · 美股　/　做 T · 加仓 · 减仓</text>
 
   <g transform="translate(72 400)">
     <rect width="132" height="43" rx="21.5" fill="#FFFFFF" fill-opacity="0.085" stroke="#FFFFFF" stroke-opacity="0.12"/>
@@ -74,68 +69,49 @@
     <text x="185" y="28" fill="#ECF2FF" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="16" font-weight="680">比较方案</text>
     <rect x="292" width="148" height="43" rx="21.5" fill="#FFFFFF" fill-opacity="0.085" stroke="#FFFFFF" stroke-opacity="0.12"/>
     <circle cx="315" cy="21.5" r="5" fill="#65D89A"/>
-    <text x="331" y="28" fill="#ECF2FF" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="16" font-weight="680">控制成本</text>
+    <text x="331" y="28" fill="#ECF2FF" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="16" font-weight="680">费用估算</text>
   </g>
 
   <g transform="translate(72 513)">
     <circle cx="9" cy="9" r="9" fill="#4F65E8"/>
     <path d="m5 9 2.7 2.7L13.3 6" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="30" y="16" fill="#D4DDF0" font-family="Inter, -apple-system, sans-serif" font-size="18" font-weight="700">costbuddy.space</text>
+    <text x="30" y="16" fill="#D4DDF0" font-family="Inter, -apple-system, sans-serif" font-size="18" font-weight="700">本地计算 · 数据保存在你的浏览器</text>
   </g>
 
-  <!-- Product glass panel -->
+  <!-- Workflow illustration: illustrative labels only, no fabricated result values -->
   <g transform="translate(618 58)" filter="url(#shadow)">
     <rect width="594" height="524" rx="30" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity="0.16"/>
-    <rect x="24" y="24" width="546" height="60" rx="18" fill="#FFFFFF" fill-opacity="0.95"/>
-    <circle cx="50" cy="54" r="5" fill="#FF8A65"/>
-    <circle cx="68" cy="54" r="5" fill="#FFBD70"/>
-    <circle cx="86" cy="54" r="5" fill="#65D89A"/>
-    <text x="116" y="61" fill="#0F172A" font-family="Inter, -apple-system, sans-serif" font-size="18" font-weight="820">CostBuddy</text>
-    <rect x="445" y="41" width="100" height="26" rx="13" fill="#EDF2FF"/>
-    <text x="465" y="59" fill="#4258CF" font-family="Inter, -apple-system, sans-serif" font-size="12" font-weight="800">HK / US</text>
+    <text x="36" y="57" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="23" font-weight="780">一笔计划，三步看清</text>
+    <text x="36" y="85" fill="#B8C7E2" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="14">流程示意 · 结果根据你填写的数据实时计算</text>
 
-    <rect x="24" y="100" width="348" height="172" rx="22" fill="#FFFFFF" fill-opacity="0.96"/>
-    <text x="48" y="133" fill="#475467" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="13" font-weight="720">交易后回本成本</text>
-    <text x="48" y="194" fill="#101828" font-family="Inter, -apple-system, sans-serif" font-size="52" font-weight="840" letter-spacing="-1.5">92.23</text>
-    <text x="221" y="192" fill="#475467" font-family="Inter, -apple-system, sans-serif" font-size="14" font-weight="650">HKD / 股</text>
-    <rect x="48" y="220" width="157" height="30" rx="15" fill="#E8F8F0"/>
-    <circle cx="65" cy="235" r="5" fill="#13A566"/>
-    <text x="78" y="240" fill="#087B49" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="12" font-weight="760">成本下降 1.77</text>
+    <path d="M73 163V386" stroke="#A9BBE8" stroke-opacity="0.35" stroke-width="3" stroke-dasharray="5 9"/>
 
-    <rect x="388" y="100" width="182" height="172" rx="22" fill="#FFFFFF" fill-opacity="0.96"/>
-    <text x="410" y="133" fill="#475467" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="13" font-weight="720">交易后持仓</text>
-    <text x="410" y="177" fill="#101828" font-family="Inter, -apple-system, sans-serif" font-size="31" font-weight="820">600</text>
-    <text x="487" y="176" fill="#475467" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="13">股</text>
-    <path d="M410 201H548" stroke="#E4E9F2"/>
-    <text x="410" y="228" fill="#667085" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="12">资金净变化</text>
-    <text x="548" y="229" text-anchor="end" fill="#087B49" font-family="Inter, -apple-system, sans-serif" font-size="14" font-weight="780">+1,063</text>
+    <rect x="32" y="112" width="530" height="112" rx="22" fill="#FFFFFF" fill-opacity="0.97"/>
+    <circle cx="73" cy="168" r="23" fill="#EDF1FF"/>
+    <text x="73" y="175" text-anchor="middle" fill="#4F65E8" font-family="Inter, sans-serif" font-size="19" font-weight="800">01</text>
+    <text x="114" y="158" fill="#101828" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="20" font-weight="780">输入持仓基准</text>
+    <text x="114" y="188" fill="#667085" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="14">市场 · 股数 · 当前成本 · 股价</text>
+    <rect x="421" y="145" width="112" height="38" rx="19" fill="#F2F5FB"/>
+    <text x="477" y="169" text-anchor="middle" fill="#475467" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="13" font-weight="700">港股 / A股 / 美股</text>
 
-    <rect x="24" y="288" width="546" height="212" rx="22" fill="#FFFFFF" fill-opacity="0.96"/>
-    <text x="48" y="322" fill="#101828" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="15" font-weight="780">回本成本演变</text>
-    <text x="546" y="322" text-anchor="end" fill="#475467" font-family="Inter, -apple-system, sans-serif" font-size="11" font-weight="800" letter-spacing="0.6">COST BASIS FLOW</text>
-
-    <path d="M60 445C129 422 178 457 236 416C293 376 349 405 401 366C441 336 492 351 540 333" fill="none" stroke="#D8E0EF" stroke-width="10" stroke-linecap="round" opacity="0.32"/>
-    <path d="M60 445C129 422 178 457 236 416C293 376 349 405 401 366C441 336 492 351 540 333" fill="none" stroke="url(#curve)" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="60" cy="445" r="7" fill="#7894FF" stroke="#FFFFFF" stroke-width="4"/>
-    <circle cx="236" cy="416" r="7" fill="#699EFD" stroke="#FFFFFF" stroke-width="4"/>
-    <circle cx="401" cy="366" r="7" fill="#59C3FF" stroke="#FFFFFF" stroke-width="4"/>
-    <circle cx="540" cy="333" r="8" fill="#65D89A" stroke="#FFFFFF" stroke-width="4"/>
-
-    <g transform="translate(57 350)">
-      <rect width="114" height="47" rx="12" fill="#F4F6FB" stroke="#E4E9F2"/>
-      <text x="14" y="19" fill="#667085" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="10">交易前</text>
-      <text x="14" y="37" fill="#101828" font-family="Inter, -apple-system, sans-serif" font-size="15" font-weight="800">94.00</text>
+    <rect x="32" y="251" width="530" height="112" rx="22" fill="#FFFFFF" fill-opacity="0.97"/>
+    <circle cx="73" cy="307" r="23" fill="#E9F7FF"/>
+    <text x="73" y="314" text-anchor="middle" fill="#1689C7" font-family="Inter, sans-serif" font-size="19" font-weight="800">02</text>
+    <text x="114" y="297" fill="#101828" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="20" font-weight="780">填写交易计划</text>
+    <text x="114" y="327" fill="#667085" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="14">买入 / 卖出 · 数量 · 预计费用</text>
+    <g transform="translate(414 282)">
+      <rect width="57" height="34" rx="17" fill="#EEF4FF"/>
+      <text x="28.5" y="22" text-anchor="middle" fill="#4F65E8" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="13" font-weight="750">买入</text>
+      <rect x="67" width="57" height="34" rx="17" fill="#FFF3E9"/>
+      <text x="95.5" y="22" text-anchor="middle" fill="#C46A27" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="13" font-weight="750">卖出</text>
     </g>
-    <g transform="translate(250 330)">
-      <rect width="114" height="47" rx="12" fill="#F4F6FB" stroke="#E4E9F2"/>
-      <text x="14" y="19" fill="#667085" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="10">卖出后</text>
-      <text x="14" y="37" fill="#101828" font-family="Inter, -apple-system, sans-serif" font-size="15" font-weight="800">100.84</text>
-    </g>
-    <g transform="translate(414 404)">
-      <rect width="132" height="52" rx="13" fill="#EDF2FF" stroke="#B8C5FA"/>
-      <text x="15" y="21" fill="#4F65E8" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="10" font-weight="720">买入后 · 新成本</text>
-      <text x="15" y="41" fill="#304ACB" font-family="Inter, -apple-system, sans-serif" font-size="17" font-weight="840">92.23</text>
-    </g>
+
+    <rect x="32" y="390" width="530" height="104" rx="22" fill="#EAF0FF" stroke="#AFC0FF" stroke-width="1.5"/>
+    <circle cx="73" cy="442" r="23" fill="#D8E2FF"/>
+    <text x="73" y="449" text-anchor="middle" fill="#4F65E8" font-family="Inter, sans-serif" font-size="19" font-weight="800">03</text>
+    <text x="114" y="432" fill="#182B76" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="20" font-weight="780">查看测算结果</text>
+    <text x="114" y="462" fill="#4F5E8B" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif" font-size="14">回本成本 · 持仓变化 · 资金明细</text>
+    <path d="M494 431h30m-9-9 9 9-9 9" fill="none" stroke="#4F65E8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
   <rect x="1" y="1" width="1278" height="638" rx="31" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>

@@ -1,14 +1,14 @@
 <div align="center">
 
-<img src="./assets/github-social-preview.svg" alt="CostBuddy 你的做T搭子 — 港股与美股持仓回本成本测算工具" width="100%" />
+<img src="./assets/github-social-preview.svg" alt="CostBuddy 你的做T搭子 — 港股、A股与美股交易计划测算流程" width="100%" />
 
 <br />
 
 # CostBuddy
 
-### 做 T、加仓、减仓前，先把成本算清楚
+### 做 T、加仓、减仓，先看成本怎么变
 
-**测算交易后的回本成本，预估不同方案的资金变化，更有效地控制自己的持仓成本。**
+**输入当前持仓与买卖计划，即时查看回本成本、持仓和资金变化。支持港股、A 股与美股。**
 
 <p>
   <a href="https://costbuddy.space"><img alt="在线使用" src="https://img.shields.io/badge/OPEN_APP-costbuddy.space-4F65E8?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
