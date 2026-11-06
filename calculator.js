@@ -5,12 +5,10 @@
   var SCENARIO_STORAGE_KEY = "hk-diluted-cost-calculator-scenarios-v1";
   var HOLDINGS_STORAGE_KEY = "hk-diluted-cost-calculator-holdings-v1";
   var CURRENT_HOLDING_STORAGE_KEY = "hk-diluted-cost-calculator-current-holding-v1";
-  var HISTORY_STORAGE_KEY = "costbuddy-history-v1";
   var THEME_STORAGE_KEY = "costbuddy-theme-v1";
   var BACKUP_FORMAT = "costbuddy-backup";
   var BACKUP_VERSION = 2;
   var MAX_BACKUP_FILE_SIZE = 2 * 1024 * 1024;
-  var MAX_HISTORY_ITEMS = 50;
   var WORKSPACE_MIN_WIDTH = 1040;
   var WORKSPACE_MIN_HEIGHT = 660;
   var MOBILE_LAYOUT_QUERY = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
@@ -62,29 +60,11 @@
       }
     },
     cn: {
-      code: "cn",
-      name: "A股",
-      shortName: "CN",
-      currency: "CNY",
-      symbol: "¥",
-      locale: "zh-CN",
-      quantityMode: "lot",
-      quantityStep: 100,
-      rangeMax: 100,
-      planQuantities: [1, 2, 3, 4, 5],
-      defaults: {
-        currentShares: 600,
-        currentCost: 18.6,
-        marketPrice: 16.8,
-        lotSize: 100,
-        sellShares: 100,
-        sellPrice: 20,
-        sellFee: 5,
-        buyShares: 100,
-        buyPrice: 16.5,
-        buyFee: 5,
-        targetCost: 17.5
-      }
+      code: "cn", name: "A 股", shortName: "CN", currency: "CNY",
+      symbol: "¥", locale: "zh-CN", quantityMode: "lot", quantityStep: 100,
+      rangeMax: 100, planQuantities: [1, 2, 3, 4, 5],
+      defaults: {currentShares: 1000, currentCost: 10, marketPrice: 8, lotSize: 100,
+        sellShares: 100, sellPrice: 9, sellFee: 0, buyShares: 200, buyPrice: 8, buyFee: 0, targetCost: 9}
     },
     us: {
       code: "us",
@@ -143,21 +123,6 @@
     manualSellFee: 0.02,
     manualBuyFee: 0
   };
-  var CN_DEFAULT_FEE_SETTINGS = {
-    mode: "manual",
-    securityType: "cn-stock",
-    commissionRate: 0.03,
-    minimumCommission: 5,
-    includeStampDuty: true,
-    includeSettlementFee: true,
-    includeSecFee: false,
-    includeFinraTaf: false,
-    secRatePerMillion: 20.6,
-    finraTafRate: 0.000195,
-    finraTafMax: 9.79,
-    manualSellFee: 5,
-    manualBuyFee: 5
-  };
   var currentMarket = "hk";
   var lastHkLotSize = MARKET_CONFIGS.hk.quantityStep;
 
@@ -168,7 +133,6 @@
   var supportFeedbackButton = document.getElementById("supportFeedbackButton");
   var supportDialog = document.getElementById("supportDialog");
   var copyFeedbackEmailButton = document.getElementById("copyFeedbackEmailButton");
-  var copyWechatButton = document.getElementById("copyWechatButton");
   var themeColorMeta = document.querySelector('meta[name="theme-color"]');
   var clearPlanButton = document.getElementById("clearPlanButton");
   var clearPlanMenu = document.getElementById("clearPlanMenu");
@@ -187,6 +151,8 @@
   var feeSettingsButton = document.getElementById("feeSettingsButton");
   var feeDialog = document.getElementById("feeDialog");
   var basisInfoButton = document.getElementById("basisInfoButton");
+  var chartHelp = document.querySelector(".chart-help");
+  var chartHelpTrigger = document.querySelector(".chart-help-trigger");
   var basisDialog = document.getElementById("basisDialog");
   var scenarioButton = document.getElementById("scenarioButton");
   var sharePlanButton = document.getElementById("sharePlanButton");
@@ -196,14 +162,6 @@
   var holdingBookNewButton = document.getElementById("holdingBookNewButton");
   var holdingList = document.getElementById("holdingList");
   var holdingEmpty = document.getElementById("holdingEmpty");
-  var historyButton = document.getElementById("historyButton");
-  var historyDialog = document.getElementById("historyDialog");
-  var historyList = document.getElementById("historyList");
-  var clearHistoryButton = document.getElementById("clearHistoryButton");
-  var historyCount = document.getElementById("historyCount");
-  var exportResultButton = document.getElementById("exportResultButton");
-  var shortcutsDialog = document.getElementById("shortcutsDialog");
-  var shortcutsButton = document.getElementById("shortcutsButton");
   var newMeasurementButton = document.getElementById("newMeasurementButton");
   var saveHoldingButton = document.getElementById("saveHoldingButton");
   var unsavedDialog = document.getElementById("unsavedDialog");
@@ -220,23 +178,20 @@
   var resetArmed = false;
   var scenarios = { A: null, B: null };
   var holdingRecords = [];
-  var historyRecords = [];
   var currentRecordId = null;
+  var costTrail = null;
+  var selectedTrailNode = null;
   var savedRecordSignature = null;
   var pendingUnsavedAction = null;
   var pendingDeleteId = null;
   var pendingImportBackup = null;
+  var HOLDING_TRASH_KEY = "costbuddy-holding-trash-v1";
+  var HOLDING_RECOVERY_KEY = "costbuddy-before-import-v1";
+  var holdingStorageFailed = false;
 
 
   function element(id) {
     return document.getElementById(id);
-  }
-
-  // Keep the header focused while preserving the existing controls and IDs.
-  var moreMenuPanel = document.querySelector(".more-menu-panel");
-  if (moreMenuPanel) {
-    moreMenuPanel.insertBefore(themeToggleButton, moreMenuPanel.firstChild);
-    moreMenuPanel.insertBefore(supportFeedbackButton, moreMenuPanel.children[1] || null);
   }
 
   function applyTheme(theme, persist) {
@@ -253,7 +208,7 @@
   }
 
   function normalizeMarket(value) {
-    return value === "us" || value === "cn" ? value : "hk";
+    return value === "cn" ? "cn" : value === "us" ? "us" : "hk";
   }
 
   function marketConfig(market) {
@@ -284,11 +239,12 @@
   }
 
   function defaultFeeSettings(market) {
+    if (normalizeMarket(market) === "cn") {
+      return Object.assign({}, DEFAULT_FEE_SETTINGS, {mode: "manual", manualSellFee: 0, manualBuyFee: 0});
+    }
     return Object.assign(
       {},
-      normalizeMarket(market) === "us"
-        ? US_DEFAULT_FEE_SETTINGS
-        : (normalizeMarket(market) === "cn" ? CN_DEFAULT_FEE_SETTINGS : DEFAULT_FEE_SETTINGS)
+      normalizeMarket(market) === "us" ? US_DEFAULT_FEE_SETTINGS : DEFAULT_FEE_SETTINGS
     );
   }
   function fitWorkspaceToWindow() {
@@ -345,8 +301,20 @@
   }
 
   function numberValue(id) {
-    var parsed = Number(element(id).value);
+    var field = element(id);
+    var value = id === "currentCost" && field.dataset.costDisplay === field.value
+      && field.dataset.exactCost !== undefined ? field.dataset.exactCost : field.value;
+    var parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function formatCurrentCostInput() {
+    var field = element("currentCost");
+    if (field.value === "" || document.activeElement === field) return;
+    var exact = numberValue("currentCost");
+    field.value = exact.toFixed(2);
+    field.dataset.exactCost = String(exact);
+    field.dataset.costDisplay = field.value;
   }
 
   function textValue(id) {
@@ -360,9 +328,8 @@
       return code.replace(/[^A-Z0-9.-]/g, "").slice(0, 10);
     }
     if (normalizeMarket(market || currentMarket) === "cn") {
-      return /^\d{1,6}$/.test(code)
-        ? code.padStart(6, "0")
-        : code.replace(/\D/g, "").slice(0, 6);
+      var digits = code.replace(/\D/g, "").slice(0, 6);
+      return digits ? digits.padStart(6, "0") : "";
     }
     return /^\d{1,5}$/.test(code)
       ? code.padStart(5, "0")
@@ -376,9 +343,6 @@
   function securityTypeLabel(type, shortLabel, market) {
     if (normalizeMarket(market || currentMarket) === "us") {
       return shortLabel ? "美股" : "美股 · 券商与监管费用";
-    }
-    if (normalizeMarket(market || currentMarket) === "cn") {
-      return shortLabel ? "A股" : "A股 · 券商费用与印花税";
     }
     if (type === "stamp-exempt") {
       return shortLabel ? "豁免" : "印花税豁免证券";
@@ -425,12 +389,11 @@
       afrcLevy: 0,
       tradingFee: 0,
       settlementFee: 0,
-      transferFee: 0,
       secFee: 0,
       finraTaf: 0,
       total: 0
     };
-    if (turnover <= 0) {
+    if (turnover <= 0 || activeMarket === "cn") {
       return emptyFee;
     }
 
@@ -455,23 +418,6 @@
         secFee: secFee,
         finraTaf: finraTaf,
         total: roundCurrency(commission + secFee + finraTaf)
-      });
-    }
-
-    if (activeMarket === "cn") {
-      var cnStampDuty = side === "sell" && settings.includeStampDuty
-        ? roundCurrency(turnover * 0.0005)
-        : 0;
-      var transferFee = settings.includeSettlementFee
-        ? roundCurrency(turnover * 0.00001)
-        : 0;
-      return Object.assign({}, emptyFee, {
-        turnover: turnover,
-        commission: roundCurrency(commission),
-        stampDuty: cnStampDuty,
-        transferFee: transferFee,
-        settlementFee: transferFee,
-        total: roundCurrency(commission + cnStampDuty + transferFee)
       });
     }
 
@@ -570,14 +516,14 @@
     if (input.currentShares <= 0) {
       return { error: "目前股数必须大于 0。" };
     }
-    if (activeMarket === "hk" && input.lotSize <= 0) {
+    if (activeMarket !== "us" && input.lotSize <= 0) {
       return { error: "每手股数必须大于 0。" };
     }
     if (!Number.isInteger(input.currentShares) || !Number.isInteger(input.sellShares)
       || !Number.isInteger(input.buyShares)) {
       return { error: "买入、卖出和目前股数请填写整数。" };
     }
-    if (activeMarket === "hk" && !Number.isInteger(input.lotSize)) {
+    if (activeMarket !== "us" && !Number.isInteger(input.lotSize)) {
       return { error: "每手股数请填写整数。" };
     }
     if (nonNegativeFields.some(function (value) { return value < 0; })) {
@@ -633,7 +579,6 @@
   function calculateTargetPlan(input, result) {
     var target = input.targetCost;
     var activeMarket = normalizeMarket(input.market);
-    var isLotMarket = activeMarket !== "us";
 
     if (target <= 0) {
       return { status: "invalid", message: "目标成本必须大于 0。" };
@@ -656,7 +601,7 @@
     var theoreticalShares;
     if (input.feeMode === "auto") {
       var low = 0;
-      var high = Math.max(1, isLotMarket ? input.lotSize : 1);
+      var high = Math.max(1, activeMarket !== "us" ? input.lotSize : 1);
       var estimatedCost = function (shares) {
         var fee = getBuyFeeFor(input, shares, input.buyPrice);
         return (result.basisAfterSale + shares * input.buyPrice + fee)
@@ -688,15 +633,15 @@
     }
 
     var wholeShares = Math.max(1, Math.ceil(theoreticalShares - 1e-9));
-    var lotShares = isLotMarket
+    var lotShares = activeMarket !== "us"
       ? Math.ceil(wholeShares / input.lotSize) * input.lotSize
       : wholeShares;
-    var units = isLotMarket ? lotShares / input.lotSize : lotShares;
+    var units = activeMarket !== "us" ? lotShares / input.lotSize : lotShares;
     var planBuyFee = getBuyFeeFor(input, lotShares, input.buyPrice);
     var outlay = lotShares * input.buyPrice + planBuyFee;
     var finalShares = result.remainingShares + lotShares;
     var actualCost = (result.basisAfterSale + outlay) / finalShares;
-    var message = isLotMarket
+    var message = activeMarket !== "us"
       ? "理论需买入 " + formatNumber(theoreticalShares, 2, activeMarket)
         + " 股；按 " + formatNumber(input.lotSize, 0, activeMarket) + " 股一手，至少买入 "
         + formatNumber(units, 0, activeMarket) + " 手。"
@@ -717,9 +662,8 @@
 
   function calculateLotPlans(input, result) {
     var activeMarket = normalizeMarket(input.market);
-    var isLotMarket = activeMarket !== "us";
     return marketConfig(activeMarket).planQuantities.map(function (quantity) {
-      var shares = isLotMarket ? quantity * input.lotSize : quantity;
+      var shares = activeMarket !== "us" ? quantity * input.lotSize : quantity;
       var planBuyFee = getBuyFeeFor(input, shares, input.buyPrice);
       var outlay = shares * input.buyPrice + planBuyFee;
       var finalShares = result.remainingShares + shares;
@@ -737,10 +681,16 @@
     element(id).textContent = text;
   }
 
+  function animateFeedback(target, frames, options) {
+    if (!target || typeof target.animate !== "function") return;
+    target.getAnimations().forEach(function (animation) { animation.cancel(); });
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    target.animate(frames, options);
+  }
+
   function applyMarketPresentation() {
     var config = marketConfig(currentMarket);
     var isUs = currentMarket === "us";
-    var isCn = currentMarket === "cn";
     document.body.dataset.market = currentMarket;
     document.documentElement.style.setProperty("--currency-symbol", '"' + config.symbol + '"');
 
@@ -769,11 +719,11 @@
     });
 
     var stockCodeInput = element("stockCode");
-    stockCodeInput.placeholder = isUs ? "AAPL" : (isCn ? "600519" : "00700");
-    stockCodeInput.maxLength = isUs ? 10 : (isCn ? 6 : 5);
+    stockCodeInput.placeholder = isUs ? "AAPL" : currentMarket === "cn" ? "600519" : "00700";
+    stockCodeInput.maxLength = isUs ? 10 : currentMarket === "cn" ? 6 : 5;
     stockCodeInput.inputMode = isUs ? "text" : "numeric";
     stockCodeInput.pattern = isUs ? "[A-Za-z0-9.-]*" : "[0-9]*";
-    element("stockName").placeholder = isUs ? "Apple" : (isCn ? "贵州茅台" : "腾讯控股");
+    element("stockName").placeholder = isUs ? "Apple" : currentMarket === "cn" ? "贵州茅台" : "腾讯控股";
     element("lotSizeField").hidden = isUs;
     element("lotSize").value = isUs ? 1 : element("lotSize").value;
 
@@ -784,16 +734,17 @@
       range.max = String(config.rangeMax);
     });
 
-    setText("comparisonKicker", "买入方案");
+    setText("comparisonKicker", isUs ? "SHARE MATRIX" : "LOT MATRIX");
     setText("comparisonTitle", isUs ? "1 / 5 / 10 / 25 / 50 股方案" : "1 至 5 手买入方案");
     setText("comparisonMeta", isUs ? "整股 · 单笔计费" : "整手 · 单笔计费");
     setText("targetPlanQuantityLabel", isUs ? "整股数量" : "整手股数");
     setText("feeDialogTitle", config.name + "交易费用设置");
-    setText("feeDialogNote", isUs
+    document.querySelector('input[name="feeMode"][value="auto"]').disabled = currentMarket === "cn";
+    element("cnMarketNote").hidden = false;
+    setText("feeDialogNote", currentMarket === "cn"
+      ? "A 股暂仅支持手动费用。请分别填写买入、卖出实际总费用，默认 0 表示未计费用。" : isUs
       ? "SEC 与 FINRA 费用仅在卖出侧估算；ADR、平台费及券商舍入方式可能不同，实际以成交单为准。规则核对日期：2026-07-28。"
-      : (isCn
-        ? "A股自动费用按佣金、卖出印花税和双边过户费估算；券商最低佣金及规费可能不同，实际以成交单为准。规则核对日期：2026-07-28。"
-        : "“印花税豁免”适用于符合条件的证券（如部分 ETF）；实际收费仍以券商成交单为准。费用规则核对日期：2026-07-28。"));
+      : "“印花税豁免”适用于符合条件的证券（如部分 ETF）；实际收费仍以券商成交单为准。费用规则核对日期：2026-07-28。");
     setFeeInputPresentation(feeSettings.mode === "auto");
   }
 
@@ -813,6 +764,8 @@
       lastHkLotSize = previousLotSize;
     }
     currentMarket = next;
+    costTrail = null;
+    selectedTrailNode = null;
     feeSettings = defaultFeeSettings(currentMarket);
 
     if (isUntouchedExample) {
@@ -825,7 +778,7 @@
     } else {
       element("lotSize").value = currentMarket === "hk"
         ? lastHkLotSize
-        : MARKET_CONFIGS[currentMarket].quantityStep;
+        : marketConfig(currentMarket).quantityStep;
       element("sellFee").value = feeSettings.manualSellFee;
       element("buyFee").value = feeSettings.manualBuyFee;
     }
@@ -837,25 +790,27 @@
     update();
     showCopyToast("已切换至" + marketConfig(currentMarket).name, false);
   }
-  function updatePricePosition(input, result) {
-    var ratio;
-    if (result.newDilutedCost <= 0) {
-      ratio = 100;
-    } else {
-      ratio = input.marketPrice / result.newDilutedCost * 100;
-    }
-    ratio = Math.max(0, Math.min(100, ratio));
-
-    element("positionFill").style.width = ratio.toFixed(2) + "%";
-    element("positionDot").style.left = ratio.toFixed(2) + "%";
-    setText(
-      "positionSummary",
-      formatNumber(input.marketPrice, 2, input.market) + "/" + formatNumber(result.newDilutedCost, 2, input.market)
-    );
-    setText("breakEvenLabel", "回本 " + formatMoney(result.newDilutedCost));
-  }
-
   function updateStages(input, result) {
+    var hasSell = input.sellShares > 0, hasBuy = input.buyShares > 0;
+    var grid = document.querySelector(".basis-dialog .stage-grid");
+    var sellCard = grid.querySelector(".stage-sell"), buyCard = grid.querySelector(".stage-buy");
+    var connectors = grid.querySelectorAll(".stage-connector");
+    sellCard.hidden = !hasSell;
+    buyCard.hidden = !hasBuy;
+    connectors[0].hidden = !hasSell;
+    connectors[1].hidden = !hasBuy;
+    grid.dataset.steps = String(1 + Number(hasSell) + Number(hasBuy));
+    grid.querySelector(".stage-step").textContent = !hasSell && !hasBuy ? "当前持仓" : !hasSell ? "加仓前" : "交易前";
+    buyCard.querySelector(".stage-step").textContent = hasSell ? "买入后" : "加仓后";
+    setText("stageTitle", !hasSell && !hasBuy ? "当前持仓成本" : !hasSell ? "加仓成本演变" : "回本成本演变");
+    var formula = document.querySelector(".basis-dialog .basis-formula");
+    formula.textContent = hasSell
+      ? (hasBuy ? "（原持仓总成本 − 卖出净所得 + 买入总支出）÷ 交易后股数" : "（原持仓总成本 − 卖出净所得）÷ 剩余股数")
+      : hasBuy ? "（原持仓总成本 + 买入金额 + 买入手续费）÷ 加仓后总股数" : "当前成本 = 原持仓总成本 ÷ 当前持仓股数";
+    var notes = document.querySelectorAll(".basis-explanation > ul > li");
+    notes[0].textContent = hasSell ? "卖出净所得会冲减仍需收回的资金，因此会影响剩余持仓的回本成本。" : hasBuy ? "加仓成本按原持仓与本次买入加权计算，买入手续费计入成本；卖出股数为 0，不计卖出费用。" : "当前没有买入或卖出，直接沿用当前持仓成本，不计买卖费用。";
+    notes[1].hidden = !hasSell;
+    document.querySelector(".basis-explanation > .dialog-lead").textContent = !hasSell && hasBuy ? "本次仅测算加仓后的每股成本，包含本次买入手续费。" : !hasSell ? "未设置交易，以下为当前持仓成本。" : "本页用于估算剩余持仓要收回全部投入资金时，对应的每股价格。";
     setText("beforeStageCost", formatMoney(input.currentCost));
     setText("beforeStageShares", formatNumber(input.currentShares, 0) + " 股");
     setText("afterSellStageCost", result.afterSellCost === null ? "已清仓" : formatMoney(result.afterSellCost));
@@ -881,8 +836,8 @@
       setText("targetPlanOutlay", formatMoney(plan.outlay, input.market));
       setText("targetPlanActualCost", formatMoney(plan.actualCost, input.market));
       applyTargetPlanButton.textContent = isUs
-        ? "带入 " + formatNumber(plan.lotShares, 0, input.market) + " 股测算"
-        : "带入 " + formatNumber(plan.lots, 0, input.market) + " 手测算";
+        ? "应用 " + formatNumber(plan.lotShares, 0, input.market) + " 股方案"
+        : "应用 " + formatNumber(plan.lots, 0, input.market) + " 手方案";
       applyTargetPlanButton.hidden = false;
       applyTargetPlanButton.disabled = false;
       return;
@@ -958,12 +913,20 @@
     ["beforeStageCost", "beforeStageShares", "afterSellStageCost", "afterSellStageShares", "afterBuyStageCost", "afterBuyStageShares"].forEach(function (id) {
       setText(id, "—");
     });
-    setText("positionSummary", "— / —");
-    setText("breakEvenLabel", "回本 —");
-    element("positionFill").style.width = "0%";
-    element("positionDot").style.left = "0%";
     setText("formulaText", isEmptyState ? "填写参数后生成计算过程。" : "请先修正输入内容。");
+    setText("chartOriginalCost", "—");
+    setText("chartNewCost", "—");
     element("chartGrid").replaceChildren();
+    element("confirmCostTrail").disabled = true;
+    element("undoCostTrail").disabled = !costTrail || costTrail.nodes.length < 2;
+    setText("trailStatus", isEmptyState ? "填写持仓和买入计划后开始记录。" : "请先修正输入内容，已确认记录仍保留。");
+    setText("trailDetail", "暂无可显示的测算结果");
+    element("trailHistoryList").replaceChildren();
+    element("chartAnnotations").replaceChildren();
+    element("chartInspection").replaceChildren();
+    element("chartInspection").setAttribute("visibility", "hidden");
+    var emptyChart = element("costChart");
+    emptyChart.onpointermove = emptyChart.onpointerdown = emptyChart.onpointerleave = emptyChart.onfocus = emptyChart.onblur = emptyChart.onkeydown = null;
     element("chartLine").setAttribute("d", "");
     element("chartArea").setAttribute("d", "");
     element("chartVerticalGuide").setAttribute("visibility", "hidden");
@@ -971,8 +934,6 @@
     element("chartEvolutionLine").setAttribute("visibility", "hidden");
     element("chartBasisPoint").setAttribute("visibility", "hidden");
     element("chartPoint").setAttribute("visibility", "hidden");
-    element("chartBasisCallout").setAttribute("visibility", "hidden");
-    element("chartPointCallout").setAttribute("visibility", "hidden");
     setText("targetPlanBadge", "目标 —");
     setText("targetPlanMessage", isEmptyState ? "填写左侧参数后开始测算。" : "请先修正输入内容。");
     setText("targetPlanShares", "—");
@@ -994,140 +955,125 @@
     return node;
   }
 
-  function drawChart(input, result) {
-    var width = 620;
-    var height = 240;
-    var padding = { left: 54, right: 18, top: 44, bottom: 34 };
-    element("chartVerticalGuide").removeAttribute("visibility");
-    element("chartHorizontalGuide").removeAttribute("visibility");
-    element("chartEvolutionLine").removeAttribute("visibility");
-    element("chartBasisPoint").removeAttribute("visibility");
-    element("chartPoint").removeAttribute("visibility");
-    element("chartBasisCallout").removeAttribute("visibility");
-    element("chartPointCallout").removeAttribute("visibility");
-    var plotWidth = width - padding.left - padding.right;
-    var plotHeight = height - padding.top - padding.bottom;
-    var center = Math.max(1, input.buyPrice);
-    var xMin = Math.max(0, Math.floor(center * 0.45 / 5) * 5);
-    var xMax = Math.max(xMin + 20, Math.ceil(center * 1.55 / 5) * 5);
-    var baseWithoutPurchasePrice = result.basisAfterSale;
-    var points = [];
-    var index;
-
-    for (index = 0; index <= 48; index += 1) {
-      var price = xMin + (xMax - xMin) * index / 48;
-      var chartBuyFee = input.buyShares > 0 ? getBuyFeeFor(input, input.buyShares, price) : 0;
-      var cost = (baseWithoutPurchasePrice + input.buyShares * price + chartBuyFee) / result.finalShares;
-      points.push({ price: price, cost: cost });
+  function drawCostTrail(input, result) {
+    var history = window.CostTrail.normalize(costTrail);
+    var compatible = !history || window.CostTrail.matches(history, input);
+    var nodes = history ? history.nodes.slice() : [{cost:input.currentCost, shares:input.currentShares, at:Date.now()}];
+    var canConfirm = compatible && input.buyShares > 0 && input.sellShares === 0;
+    var plotted = nodes.slice();
+    if (canConfirm) plotted.push({cost:result.newDilutedCost, shares:result.finalShares, buyPrice:input.buyPrice, buyShares:input.buyShares, buyFee:result.appliedBuyFee, preview:true});
+    element("confirmCostTrail").disabled = !canConfirm;
+    element("undoCostTrail").disabled = !history || history.nodes.length < 2;
+    element("restoreTrailBaseline").hidden = compatible;
+    setText("trailCount", (nodes.length - 1) + " 次加仓");
+    setText("trailStatus", !compatible ? "持仓基准已变化，恢复已确认持仓后继续累计。" : input.sellShares > 0 ? "卖出后可从新持仓基准开启一段记录。" : input.buyShares > 0 ? "虚线是本次预览，确认后保存为新的记忆点。" : "填写下一次买入计划，接着当前持仓继续计算。");
+    element("sellTrailContinuation").hidden = !(input.sellShares > 0 && input.buyShares === 0 && !result.error);
+    if (input.sellShares > 0 && input.buyShares === 0 && !result.error) {
+      setText("sellTrailSummary", formatNumber(result.finalShares, 0, input.market) + " 股 · " + formatMoney(result.newDilutedCost, input.market) + " / 股");
     }
-
-    var costs = points.map(function (point) { return point.cost; });
-    costs.push(result.newDilutedCost);
-    costs.push(input.currentCost);
-    var yMin = Math.min.apply(null, costs);
-    var yMax = Math.max.apply(null, costs);
-    var yPadding = Math.max(1, (yMax - yMin) * 0.25);
-    yMin -= yPadding;
-    yMax += yPadding;
-    if (Math.abs(yMax - yMin) < 0.001) {
-      yMax = yMin + 1;
+    var grid = element("chartGrid"), marks = element("chartAnnotations");
+    grid.replaceChildren(); marks.replaceChildren(); element("chartInspection").replaceChildren();
+    ["chartVerticalGuide","chartHorizontalGuide","chartEvolutionLine","chartBasisPoint","chartPoint"].forEach(function(id){element(id).setAttribute("visibility","hidden");});
+    element("chartArea").setAttribute("d", "");
+    var min = Math.min.apply(null, plotted.map(function(n){return n.cost;}));
+    var max = Math.max.apply(null, plotted.map(function(n){return n.cost;}));
+    var pad = Math.max((max-min)*.18, Math.abs(max)*.025, .1); min-=pad; max+=pad;
+    var chartHeight = 460;
+    element('costChart').setAttribute('viewBox','0 0 620 '+chartHeight);
+    element('costChart').style.setProperty('aspect-ratio','620 / '+chartHeight);
+    var left=64,right=588,top=28,bottom=chartHeight-42;
+    function x(i){return plotted.length === 1 ? (left+right)/2 : left+i*(right-left)/(plotted.length-1);}
+    function y(v){return bottom-(v-min)/(max-min)*(bottom-top);}
+    for(var t=0;t<4;t++){var v=min+(max-min)*t/3;grid.appendChild(svgNode("line",{x1:left,x2:right,y1:y(v),y2:y(v),"class":"chart-grid-line"}));grid.appendChild(svgNode("text",{x:left-10,y:y(v)+4,"text-anchor":"end","class":"chart-axis-label"},compactNumber(v)));}
+    grid.appendChild(svgNode("text",{x:left,y:13,"class":"chart-axis-title"},marketConfig(input.market).currency+" / 股"));
+    element("chartLine").setAttribute("d",nodes.map(function(n,i){return (i?"L":"M")+x(i)+","+y(n.cost);}).join(" "));
+    if(canConfirm){var i=plotted.length-1;marks.appendChild(svgNode("path",{d:"M"+x(i-1)+","+y(plotted[i-1].cost)+" L"+x(i)+","+y(plotted[i].cost),"class":"trail-preview-line"}));}
+    var selected = selectedTrailNode === null ? plotted.length-1 : Math.min(selectedTrailNode,plotted.length-1);
+    function detail(index){
+      selectedTrailNode=index; var n=plotted[index]; var title=n.preview?"本次待确认":index===0?"初始持仓":"第 "+index+" 次加仓";
+      var box=element("trailDetail");box.replaceChildren();
+      var heading=document.createElement("strong");heading.textContent=title+" · "+formatMoney(Number(n.cost.toFixed(2)),input.market)+" / 股";box.appendChild(heading);
+      element("trailHistoryList").querySelectorAll("[data-history-node]").forEach(function(row){var active=Number(row.dataset.historyNode)===index;row.classList.toggle("is-selected",active);row.setAttribute("aria-pressed",String(active));});
+      marks.querySelectorAll("[data-trail-node]").forEach(function(node){node.classList.toggle("is-selected",Number(node.dataset.trailNode)===index);node.setAttribute("aria-pressed",String(Number(node.dataset.trailNode)===index));});
     }
-
-    function x(value) {
-      return padding.left + (value - xMin) / (xMax - xMin) * plotWidth;
-    }
-
-    function y(value) {
-      return padding.top + plotHeight - (value - yMin) / (yMax - yMin) * plotHeight;
-    }
-
-    var linePath = points.map(function (point, pointIndex) {
-      return (pointIndex === 0 ? "M" : "L") + x(point.price).toFixed(1) + "," + y(point.cost).toFixed(1);
-    }).join(" ");
-    var areaPath = linePath
-      + " L" + x(xMax).toFixed(1) + "," + (padding.top + plotHeight).toFixed(1)
-      + " L" + x(xMin).toFixed(1) + "," + (padding.top + plotHeight).toFixed(1)
-      + " Z";
-
-    element("chartLine").setAttribute("d", linePath);
-    element("chartArea").setAttribute("d", areaPath);
-
-    var grid = element("chartGrid");
-    grid.replaceChildren();
-    for (index = 0; index <= 3; index += 1) {
-      var yValue = yMin + (yMax - yMin) * index / 3;
-      var yPosition = y(yValue);
-      grid.appendChild(svgNode("line", {
-        x1: padding.left,
-        x2: padding.left + plotWidth,
-        y1: yPosition,
-        y2: yPosition,
-        "class": "chart-grid-line"
-      }));
-      grid.appendChild(svgNode("text", {
-        x: padding.left - 8,
-        y: yPosition + 4,
-        "text-anchor": "end",
-        "class": "chart-axis-label"
-      }, yValue.toFixed(1)));
-    }
-
-    [xMin, (xMin + xMax) / 2, xMax].forEach(function (tick) {
-      grid.appendChild(svgNode("text", {
-        x: x(tick),
-        y: height - 9,
-        "text-anchor": "middle",
-        "class": "chart-axis-label"
-      }, marketConfig(input.market).symbol + tick.toFixed(0)));
+    plotted.forEach(function(n,i){
+      var group=svgNode("g",{tabindex:0,role:"button","aria-label":(n.preview?"待确认":i===0?"初始持仓":"第"+i+"次加仓")+"，成本"+n.cost.toFixed(2),"data-trail-node":i,"class":"trail-node"+(n.preview?" is-preview":"")});
+      group.appendChild(svgNode("circle",{cx:x(i),cy:y(n.cost),r:17,"class":"trail-hit"}));
+      group.appendChild(svgNode("circle",{cx:x(i),cy:y(n.cost),r:6,"class":"trail-dot"}));
+      group.onclick=function(){detail(i);};group.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();detail(i);}};marks.appendChild(group);
+      if(plotted.length<=9||i===0||i===plotted.length-1){grid.appendChild(svgNode("text",{x:x(i),y:chartHeight-19,"text-anchor":"middle","class":"chart-axis-label"},n.preview?"待确认":i===0?"初始":"第 "+i+" 次"));}
     });
+    var historyList=element("trailHistoryList"), previousScroll=historyList.scrollTop;
+    historyList.replaceChildren();
+    if(nodes.length < 2) {
+      var empty=document.createElement("p"); empty.className="trail-history-empty"; empty.textContent="确认本次加仓后，记录会显示在这里。"; historyList.appendChild(empty);
+    }
+    nodes.slice(1).map(function(n,i){return {node:n,index:i+1};}).reverse().forEach(function(entry){
+      var n=entry.node, row=document.createElement("button"); row.type="button";row.className="trail-history-row";row.dataset.historyNode=entry.index;
+      var title=document.createElement("strong");title.textContent="第 "+entry.index+" 次加仓";
+      var cost=document.createElement("strong");cost.className="trail-history-cost";cost.textContent="成本 "+formatMoney(n.cost,input.market)+" / 股";
+      var trade=document.createElement("span");trade.textContent="买入 "+formatNumber(n.buyShares,0,input.market)+" 股 × "+formatMoney(n.buyPrice,input.market);
+      var fee=document.createElement("span");fee.className="trail-history-fee";fee.textContent="费用 "+formatMoney(n.buyFee,input.market);
+      var total=document.createElement("span");total.className="trail-history-total";total.textContent="加仓后持有 "+formatNumber(n.shares,0,input.market)+" 股";
+      var delta=document.createElement("span");delta.className="trail-history-delta";delta.textContent="较上次 "+formatSignedMoney(n.cost-nodes[entry.index-1].cost,input.market)+" / 股";
+      var meta=document.createElement("span");meta.className="trail-history-meta";meta.append(trade,fee,total);
+      row.append(title,cost,meta,delta);row.onclick=function(){detail(entry.index);};historyList.appendChild(row);
+    });
+    historyList.scrollTop=previousScroll;
+    detail(selected);
+    setText("chartDescription","加仓成本轨迹，已确认"+(nodes.length-1)+"次加仓。点选节点查看股数、价格和费用。虚线为待确认方案。");
+    var previewLine = marks.querySelector(".trail-preview-line");
+    if (previewLine) animateFeedback(previewLine, [{opacity:0.2},{opacity:0.58}], {duration:150,easing:"ease-out"});
+  }
 
-    var pointX = x(Math.max(xMin, Math.min(xMax, input.buyPrice)));
-    var pointY = y(result.newDilutedCost);
-    var basisPointY = y(input.currentCost);
-    var verticalGuide = element("chartVerticalGuide");
-    var horizontalGuide = element("chartHorizontalGuide");
-    var evolutionLine = element("chartEvolutionLine");
-    verticalGuide.setAttribute("x1", pointX);
-    verticalGuide.setAttribute("x2", pointX);
-    verticalGuide.setAttribute("y1", Math.min(pointY, basisPointY));
-    verticalGuide.setAttribute("y2", padding.top + plotHeight);
-    horizontalGuide.setAttribute("x1", padding.left);
-    horizontalGuide.setAttribute("x2", pointX);
-    horizontalGuide.setAttribute("y1", pointY);
-    horizontalGuide.setAttribute("y2", pointY);
-    evolutionLine.setAttribute("x1", pointX);
-    evolutionLine.setAttribute("x2", pointX);
-    evolutionLine.setAttribute("y1", basisPointY);
-    evolutionLine.setAttribute("y2", pointY);
-    element("chartBasisPoint").setAttribute("cx", pointX);
-    element("chartBasisPoint").setAttribute("cy", basisPointY);
-    element("chartPoint").setAttribute("cx", pointX);
-    element("chartPoint").setAttribute("cy", pointY);
+  function persistTrailHolding() {
+    var record=findHoldingRecord(currentRecordId);
+    if(record){record.values=captureFormValues();record.feeSettings=normalizedFeeSettings(feeSettings,currentMarket);record.costTrail=window.CostTrail.normalize(costTrail);record.updatedAt=Date.now();savedRecordSignature=holdingStateSignature(record.values,record.feeSettings,record.scenarios);persistHoldingRecords();}
+  }
+  function confirmCostTrail() {
+    update();
+    if(!latestInput||!latestResult||element("confirmCostTrail").disabled)return;
+    var values=Object.assign({},captureFormValues(),{buyFee:latestResult.appliedBuyFee});
+    var history=window.CostTrail.commit(costTrail,values);
+    history.nodes[history.nodes.length-1].beforeSettings=Object.assign({},feeSettings);
+    var last=history.nodes[history.nodes.length-1];
+    var next=Object.assign({},values,{currentShares:last.shares,currentCost:last.cost,buyShares:0,sellShares:0,buyFee:0,sellFee:0,_costTrail:history});
+    selectedTrailNode=null;setCalculatorState(next,feeSettings,true);persistTrailHolding();updateSavedStateUI();
+    var confirmedNode=element("chartAnnotations").querySelector(".trail-node:last-child");
+    if(confirmedNode){confirmedNode.classList.add("is-new");window.setTimeout(function(){confirmedNode.classList.remove("is-new");},520);}
+    showCopyToast("已记录本次加仓，填写下一次买入计划即可继续",false);
+  }
+  function undoCostTrail() {
+    if(!costTrail||costTrail.nodes.length<2)return;
+    var history=window.CostTrail.normalize(costTrail), last=history.nodes.pop();
+    setCalculatorState(Object.assign({},last.beforeValues,{_costTrail:history}),last.beforeSettings||feeSettings,true);persistTrailHolding();updateSavedStateUI();
+    showCopyToast("已撤销上次加仓，并恢复该次买入参数",false);
+  }
 
-    var basisLabel = element("chartBasisLabel");
-    var basisLabelBg = element("chartBasisLabelBg");
-    var basisCallout = element("chartBasisCallout");
-    var pointLabel = element("chartPointLabel");
-    var pointLabelBg = element("chartPointLabelBg");
-    var pointCallout = element("chartPointCallout");
-    setText("chartBasisLabel", "原成本 " + input.currentCost.toFixed(2));
-    setText("chartPointLabel", "新成本 " + result.newDilutedCost.toFixed(2));
-
-    var calloutWidth = 122;
-    var calloutHeight = 24;
-    var calloutY = 7;
-    var basisCalloutX = padding.left;
-    var pointCalloutX = basisCalloutX + calloutWidth + 8;
-    basisLabel.setAttribute("x", 10);
-    basisLabel.setAttribute("y", 16);
-    pointLabel.setAttribute("x", 10);
-    pointLabel.setAttribute("y", 16);
-    basisLabelBg.setAttribute("width", calloutWidth);
-    basisLabelBg.setAttribute("height", calloutHeight);
-    pointLabelBg.setAttribute("width", calloutWidth);
-    pointLabelBg.setAttribute("height", calloutHeight);
-    basisCallout.setAttribute("transform", "translate(" + basisCalloutX + "," + calloutY + ")");
-    pointCallout.setAttribute("transform", "translate(" + pointCalloutX + "," + calloutY + ")");
+  function continueAfterSale() {
+    update();
+    if (!latestInput || !latestResult || latestInput.sellShares <= 0 || latestResult.remainingShares <= 0) return;
+    var oldHistory = window.CostTrail.normalize(costTrail);
+    var archived = oldHistory ? (oldHistory.archivedSegments || []).concat([{
+      closedAt: Date.now(),
+      reason: "sale",
+      nodes: oldHistory.nodes
+    }]) : [];
+    var values = Object.assign({}, captureFormValues(), {
+      currentShares: latestResult.finalShares,
+      currentCost: latestResult.newDilutedCost,
+      buyShares: 0,
+      sellShares: 0,
+      buyFee: 0,
+      sellFee: 0
+    });
+    var nextHistory = {market: currentMarket, stockCode: values.stockCode, stockName: values.stockName,
+      nodes: [{cost: values.currentCost, shares: values.currentShares, at: Date.now()}], archivedSegments: archived};
+    selectedTrailNode = null;
+    setCalculatorState(Object.assign({}, values, {_costTrail: nextHistory}), feeSettings, true);
+    persistTrailHolding();
+    updateSavedStateUI();
+    showCopyToast("已按卖出结果建立新基准，旧轨迹已保留", false);
   }
 
   function showError(message) {
@@ -1157,6 +1103,8 @@
     } else if (normalizeMarket(input.market) !== "us" && input.buyShares > 0
       && input.lotSize > 0 && input.buyShares % input.lotSize !== 0) {
       message = "当前买入股数不是整手，实际成交请确认碎股规则。";
+    } else if (input.buyShares > 0 && input.buyPrice > input.currentCost && input.sellShares === 0) {
+      message = '买入价高于目前成本，本次加仓会抬高持仓成本。';
     } else if (input.buyShares === 0 && input.sellShares === 0) {
       message = "当前没有设置交易，结果等于原持仓成本。";
     }
@@ -1182,6 +1130,8 @@
 
 
   function restoreExample() {
+    costTrail = null;
+    selectedTrailNode = null;
     var defaults = marketDefaults(currentMarket, false);
     Object.keys(DEFAULTS).forEach(function (key) {
       element(key).value = defaults[key];
@@ -1267,17 +1217,14 @@
   function dialogFeeSettings() {
     var selectedMode = document.querySelector('input[name="feeMode"]:checked');
     var isUs = currentMarket === "us";
-    var isCn = currentMarket === "cn";
-    var securityType = isUs ? "us-stock" : (isCn ? "cn-stock" : syncSecurityTypePreset());
-    var commissionInput = isUs ? "usCommissionRate" : (isCn ? "cnCommissionRate" : "commissionRate");
-    var minimumInput = isUs ? "usMinimumCommission" : (isCn ? "cnMinimumCommission" : "minimumCommission");
+    var securityType = isUs ? "us-stock" : syncSecurityTypePreset();
     return {
-      mode: selectedMode ? selectedMode.value : "manual",
+      mode: currentMarket === "cn" ? "manual" : selectedMode ? selectedMode.value : "manual",
       securityType: securityType,
-      commissionRate: Math.max(0, numberValue(commissionInput)),
-      minimumCommission: Math.max(0, numberValue(minimumInput)),
-      includeStampDuty: isUs ? false : element(isCn ? "includeCnStampDuty" : "includeStampDuty").checked,
-      includeSettlementFee: isUs ? false : element(isCn ? "includeCnTransferFee" : "includeSettlementFee").checked,
+      commissionRate: Math.max(0, numberValue(isUs ? "usCommissionRate" : "commissionRate")),
+      minimumCommission: Math.max(0, numberValue(isUs ? "usMinimumCommission" : "minimumCommission")),
+      includeStampDuty: isUs ? false : element("includeStampDuty").checked,
+      includeSettlementFee: isUs ? false : element("includeSettlementFee").checked,
       includeSecFee: isUs && element("includeSecFee").checked,
       includeFinraTaf: isUs && element("includeFinraTaf").checked,
       secRatePerMillion: feeSettings.secRatePerMillion,
@@ -1292,10 +1239,9 @@
     var settings = dialogFeeSettings();
     var isAuto = settings.mode === "auto";
     var isUs = currentMarket === "us";
-    var isCn = currentMarket === "cn";
     element("autoFeeSettings").hidden = !isAuto;
-    element("hkAutoFeeSettings").hidden = isUs || isCn;
-    element("cnAutoFeeSettings").hidden = !isCn;
+    element("manualFeeSettings").hidden = isAuto;
+    element("hkAutoFeeSettings").hidden = isUs;
     element("usAutoFeeSettings").hidden = !isUs;
     setText("feeModeSummary", isAuto
       ? securityTypeLabel(settings.securityType, false, currentMarket) + " · 按成交金额估算"
@@ -1312,6 +1258,12 @@
   }
 
   function syncFeeDialog() {
+    element("manualBuyFeeInput").value = feeSettings.manualBuyFee;
+    element("manualSellFeeInput").value = feeSettings.manualSellFee;
+    element("manualFeeError").hidden = true;
+    document.querySelectorAll(".manual-fee-currency").forEach(function (unit) {
+      unit.textContent = currentMarket === "us" ? "USD" : currentMarket === "cn" ? "CNY" : "HKD";
+    });
     var selected = document.querySelector('input[name="feeMode"][value="' + feeSettings.mode + '"]');
     var selectedSecurity = document.querySelector('input[name="securityType"][value="' + feeSettings.securityType + '"]');
     if (selected) {
@@ -1326,10 +1278,6 @@
     element("includeSettlementFee").checked = feeSettings.includeSettlementFee;
     element("usCommissionRate").value = feeSettings.commissionRate;
     element("usMinimumCommission").value = feeSettings.minimumCommission;
-    element("cnCommissionRate").value = feeSettings.commissionRate;
-    element("cnMinimumCommission").value = feeSettings.minimumCommission;
-    element("includeCnStampDuty").checked = feeSettings.includeStampDuty;
-    element("includeCnTransferFee").checked = feeSettings.includeSettlementFee;
     element("includeSecFee").checked = feeSettings.includeSecFee;
     element("includeFinraTaf").checked = feeSettings.includeFinraTaf;
     if (currentMarket === "hk") {
@@ -1339,12 +1287,18 @@
   }
   function applyFeeSettingsFromDialog() {
     var nextSettings = dialogFeeSettings();
-    if (feeSettings.mode === "manual") {
-      feeSettings.manualSellFee = numberValue("sellFee");
-      feeSettings.manualBuyFee = numberValue("buyFee");
+    if (nextSettings.mode === "manual") {
+      var buyField = element("manualBuyFeeInput");
+      var sellField = element("manualSellFeeInput");
+      var buyFee = Number(buyField.value);
+      var sellFee = Number(sellField.value);
+      if (buyField.value.trim() === "" || sellField.value.trim() === "" || !Number.isFinite(buyFee) || !Number.isFinite(sellFee) || buyFee < 0 || sellFee < 0) {
+        element("manualFeeError").hidden = false;
+        return;
+      }
+      nextSettings.manualBuyFee = buyFee;
+      nextSettings.manualSellFee = sellFee;
     }
-    nextSettings.manualSellFee = feeSettings.manualSellFee;
-    nextSettings.manualBuyFee = feeSettings.manualBuyFee;
     feeSettings = nextSettings;
 
     if (feeSettings.mode === "manual") {
@@ -1430,11 +1384,9 @@
     if (!source || typeof source !== "object") {
       return settings;
     }
-    settings.mode = source.mode === "auto" ? "auto" : "manual";
+    settings.mode = activeMarket !== "cn" && source.mode === "auto" ? "auto" : "manual";
     if (activeMarket === "us") {
       settings.securityType = "us-stock";
-    } else if (activeMarket === "cn") {
-      settings.securityType = "cn-stock";
     } else {
       settings.securityType = ["stock", "stamp-exempt", "custom"].indexOf(source.securityType) >= 0
         ? source.securityType
@@ -1461,7 +1413,7 @@
       }
       settings.includeSecFee = false;
       settings.includeFinraTaf = false;
-    } else if (activeMarket === "us") {
+    } else {
       settings.includeStampDuty = false;
       settings.includeSettlementFee = false;
     }
@@ -1505,10 +1457,14 @@
   }
 
   function setCalculatorState(values, settingsSource, shouldUpdate) {
+    costTrail = window.CostTrail.normalize(values && values._costTrail);
+    selectedTrailNode = null;
     currentMarket = normalizeMarket(values && values.market);
     var defaults = marketDefaults(currentMarket, false);
     feeSettings = normalizedFeeSettings(settingsSource, currentMarket);
     applyMarketPresentation();
+    delete element("currentCost").dataset.exactCost;
+    delete element("currentCost").dataset.costDisplay;
     Object.keys(DEFAULTS).forEach(function (key) {
       if (Number.isFinite(Number(values && values[key]))) {
         element(key).value = Number(values[key]);
@@ -1518,8 +1474,8 @@
     });
     if (currentMarket === "us") {
       element("lotSize").value = 1;
-    } else if (currentMarket === "hk") {
-      lastHkLotSize = Math.max(1, numberValue("lotSize"));
+    } else {
+      if (currentMarket === "hk") lastHkLotSize = Math.max(1, numberValue("lotSize"));
     }
     element("stockCode").value = normalizedStockCode(values && values.stockCode, currentMarket);
     element("stockName").value = String(values && values.stockName || "").trim();
@@ -1572,7 +1528,7 @@
       showCopyToast("请先修正输入内容", true);
       return;
     }
-    copyText(buildShareUrl(), "分享链接已复制");
+    window.CostBuddyShare.open(JSON.parse(JSON.stringify(latestInput)), JSON.parse(JSON.stringify(latestResult)));
   }
 
 
@@ -1700,6 +1656,7 @@
       values: values,
       feeSettings: normalizedFeeSettings(source.feeSettings, activeMarket),
       scenarios: normalizedScenarios(source.scenarios),
+      costTrail: window.CostTrail.normalize(source.costTrail),
       updatedAt: Number(source.updatedAt) || Date.now()
     };
   }
@@ -1723,10 +1680,13 @@
       } else {
         localStorage.removeItem(CURRENT_HOLDING_STORAGE_KEY);
       }
+      holdingStorageFailed = false;
     } catch (error) {
-      // The current calculation remains usable if browser storage is unavailable.
+      holdingStorageFailed = true;
     }
+    element("holdingStorageError").hidden = !holdingStorageFailed;
     updateHoldingCount();
+    return !holdingStorageFailed;
   }
 
   function findHoldingRecord(id) {
@@ -1769,6 +1729,12 @@
   }
 
   function updateSavedStateUI() {
+    if (holdingStorageFailed) {
+      saveHoldingButton.classList.remove("is-saved");
+      saveHoldingButton.classList.add("is-dirty");
+      setText("saveHoldingLabel", "保存失败 · 请备份");
+      return;
+    }
     var dirty = isCurrentDirty();
     saveHoldingButton.classList.toggle("is-saved", Boolean(currentRecordId && !dirty));
     saveHoldingButton.classList.toggle("is-dirty", Boolean(currentRecordId && dirty));
@@ -1909,6 +1875,7 @@
           values: captureFormValues(),
           feeSettings: normalizedFeeSettings(feeSettings),
           scenarios: normalizedScenarios(scenarios),
+          costTrail: window.CostTrail.normalize(costTrail),
           recordId: currentRecordId
         },
         holdings: holdingRecords
@@ -1960,6 +1927,7 @@
       values: currentValues,
       feeSettings: currentSource && currentSource.feeSettings,
       scenarios: currentSource && currentSource.scenarios,
+      costTrail: currentSource && currentSource.costTrail,
       updatedAt: Date.now()
     });
     if (!normalizedCurrent) {
@@ -1981,6 +1949,7 @@
         values: normalizedCurrent.values,
         feeSettings: normalizedCurrent.feeSettings,
         scenarios: normalizedCurrent.scenarios,
+        costTrail: normalizedCurrent.costTrail,
         recordId: linkedRecordId
       }
     };
@@ -1988,7 +1957,7 @@
   function previewBackupImport(backup) {
     pendingImportBackup = backup;
     var timeText = backup.exportedAt ? formatHoldingTime(backup.exportedAt) + " 导出" : "未记录导出时间";
-    setText("importBackupSummary", "备份包含 " + backup.holdings.length + " 条持仓 · " + timeText);
+    setText("importBackupSummary", "将载入 " + backup.holdings.length + " 条持仓，替换当前 " + holdingRecords.length + " 条 · " + timeText);
     openDialog(importBackupDialog);
   }
 
@@ -2012,6 +1981,12 @@
     if (!pendingImportBackup) {
       return;
     }
+    try {
+      localStorage.setItem(HOLDING_RECOVERY_KEY, JSON.stringify(backupPayload()));
+    } catch (error) {
+      showCopyToast("无法保存恢复副本，已停止导入，请先导出备份", true);
+      return;
+    }
     var backup = pendingImportBackup;
     pendingImportBackup = null;
     holdingRecords = backup.holdings.slice();
@@ -2028,12 +2003,12 @@
     } catch (error) {
       // Ignore unavailable legacy-storage cleanup.
     }
-    setCalculatorState(backup.current.values, backup.current.feeSettings, true);
+    setCalculatorState(Object.assign({}, backup.current.values, {_costTrail:backup.current.costTrail}), backup.current.feeSettings, true);
     updateScenarioCount();
     updateSavedStateUI();
     renderHoldingBook();
     closeDialog(importBackupDialog);
-    showCopyToast("已导入 " + holdingRecords.length + " 条持仓", false);
+    showCopyToast(holdingStorageFailed ? "导入数据尚未保存，请立即导出备份" : "已导入 " + holdingRecords.length + " 条持仓，可恢复导入前的数据", holdingStorageFailed);
   }
 
   function createHoldingId() {
@@ -2060,6 +2035,7 @@
     record.values = captureFormValues();
     record.feeSettings = normalizedFeeSettings(feeSettings, currentMarket);
     record.scenarios = normalizedScenarios(scenarios);
+    record.costTrail = window.CostTrail.normalize(costTrail);
     record.updatedAt = Date.now();
     holdingRecords.sort(function (a, b) { return b.updatedAt - a.updatedAt; });
     savedRecordSignature = holdingStateSignature(record.values, record.feeSettings, record.scenarios);
@@ -2071,8 +2047,8 @@
     }
     updateSavedStateUI();
     renderHoldingBook();
-    showCopyToast("已保存到持仓簿", false);
-    return true;
+    showCopyToast(holdingStorageFailed ? "保存失败，请立即导出备份" : "已保存到持仓簿", holdingStorageFailed);
+    return !holdingStorageFailed;
   }
 
   function holdingCalculation(record) {
@@ -2088,11 +2064,72 @@
       + " " + pad(date.getHours()) + ":" + pad(date.getMinutes());
   }
 
+  function appendHoldingDetails(card, record) {
+    var values = record.values, market = record.market;
+    var money = function (value) { return formatMoney(value, market); };
+    var history = record.costTrail;
+    var note = document.createElement("p");
+    note.className = "holding-plan-note";
+    note.textContent = (values.buyShares || values.sellShares ? "测算中 · 买卖计划尚未确认" : "暂无待确认交易") + " · " + (history ? history.nodes.length - 1 : 0) + " 次已确认加仓";
+    card.appendChild(note);
+    var details = document.createElement("details");
+    details.className = "holding-details";
+    var summary = document.createElement("summary");
+    summary.textContent = "查看完整数据与加仓记录";
+    details.appendChild(summary);
+    var list = document.createElement("dl");
+    function row(label, value) {
+      var term = document.createElement("dt"), description = document.createElement("dd");
+      term.textContent = label; description.textContent = value;
+      list.append(term, description);
+    }
+    row("每手股数", values.lotSize + " 股");
+    row("买入计划（未确认）", values.buyShares + " 股 × " + money(values.buyPrice));
+    row("卖出计划（测算）", values.sellShares + " 股 × " + money(values.sellPrice));
+    var input = inputFromState(values, record.feeSettings);
+    row("买入 / 卖出费用", money(input.buyFee) + " / " + money(input.sellFee));
+    row("目标成本", money(values.targetCost));
+    var settings = record.feeSettings;
+    row("费用方式", settings.mode === "auto" ? "自动估算" : "手动填写");
+    if (settings.mode === "auto") {
+      row("佣金比例 / 最低佣金", settings.commissionRate + "% / " + money(settings.minimumCommission));
+      row("费用项目", market === "us" ? "SEC：" + (settings.includeSecFee ? "计入" : "不计") + "；FINRA：" + (settings.includeFinraTaf ? "计入" : "不计") : "印花税：" + (settings.includeStampDuty ? "计入" : "不计") + "；结算费：" + (settings.includeSettlementFee ? "计入" : "不计"));
+    }
+    ["A", "B"].forEach(function (slot) {
+      var snapshot = record.scenarios[slot], calculation = scenarioCalculation(snapshot);
+      row("对比方案 " + slot, !snapshot ? "未保存" : !calculation ? "参数待完善" : formatMoney(calculation.result.newDilutedCost, calculation.input.market) + " / 股 · 买 " + calculation.input.buyShares + " 股 · 卖 " + calculation.input.sellShares + " 股");
+    });
+    details.appendChild(list);
+    var title = document.createElement("h4"); title.textContent = "已确认加仓记录"; details.appendChild(title);
+    var timeline = document.createElement("ol"); timeline.className = "holding-timeline";
+    if (history) history.nodes.forEach(function (node, index) {
+      var item = document.createElement("li"), strong = document.createElement("strong"), small = document.createElement("span");
+      strong.textContent = (index ? "第 " + index + " 次加仓" : "初始持仓") + " · " + node.shares + " 股 · 成本 " + money(node.cost);
+      small.textContent = formatHoldingTime(node.at) + (index ? " · 买入 " + node.buyShares + " 股 × " + money(node.buyPrice) + " · 费用 " + money(node.buyFee) + " · 成本变化 " + money(history.nodes[index - 1].cost) + " → " + money(node.cost) : " · 建立记录");
+      item.append(strong, small); timeline.appendChild(item);
+    });
+    if (!history) { var empty = document.createElement("li"); empty.textContent = "尚无已确认记录，确认本次加仓后会保留节点。"; timeline.appendChild(empty); }
+    details.appendChild(timeline);
+    var tools = document.createElement("div"); tools.className = "holding-detail-actions";
+    var label = document.createElement("label"); label.textContent = "股票名称";
+    var name = document.createElement("input"); name.value = values.stockName; name.maxLength = 80; name.dataset.holdingName = "true"; name.placeholder = "填写名称"; label.appendChild(name); tools.appendChild(label);
+    [["rename","保存名称"],["duplicate","复制测算"]].forEach(function (action) { var button = document.createElement("button"); button.type = "button"; button.dataset.holdingAction = action[0]; button.textContent = action[1]; tools.appendChild(button); });
+    details.appendChild(tools); card.appendChild(details);
+  }
+
 
   function renderHoldingBook() {
     holdingList.replaceChildren();
     holdingEmpty.hidden = holdingRecords.length > 0;
-    holdingRecords.forEach(function (record) {
+    var query = element("holdingSearch").value.trim().toLowerCase();
+    var market = element("holdingMarketFilter").value;
+    var visible = holdingRecords.filter(function (r) {
+      return (market === "all" || r.market === market) && (r.values.stockCode + " " + r.values.stockName).toLowerCase().includes(query);
+    }).sort(function (a, b) {
+      return element("holdingSort").value === "code" ? a.values.stockCode.localeCompare(b.values.stockCode) : b.updatedAt - a.updatedAt;
+    });
+    element("holdingNoMatch").hidden = !holdingRecords.length || visible.length > 0;
+    visible.forEach(function (record) {
       var calculation = holdingCalculation(record);
       var card = document.createElement("article");
       var isCurrent = record.id === currentRecordId;
@@ -2108,7 +2145,7 @@
         + '  <div><span>目前持仓</span><strong data-field="shares"></strong></div>'
         + '  <div><span>目前成本</span><strong data-field="cost"></strong></div>'
         + '  <div><span>当前股价</span><strong data-field="price"></strong></div>'
-        + '  <div><span>资金回本成本</span><strong data-field="basis"></strong></div>'
+        + '  <div><span>方案回本成本</span><strong data-field="basis"></strong></div>'
         + '</div>'
         + '<div class="holding-card-footer">'
         + '  <time data-field="time"></time>'
@@ -2117,6 +2154,7 @@
         + '    <button class="holding-delete-button" type="button" data-holding-action="delete">删除</button>'
         + '  </div>'
         + '</div>';
+      appendHoldingDetails(card, record);
       card.querySelector('[data-field="market"]').textContent = marketConfig(recordMarket).shortName;
       card.querySelector('[data-field="code"]').textContent = record.values.stockCode || "未填写代码";
       card.querySelector('[data-field="name"]').textContent = record.values.stockName || "未命名持仓";
@@ -2138,6 +2176,11 @@
       holdingList.appendChild(card);
     });
     updateHoldingCount();
+    setText("holdingBookFooter", visible.length + " / " + holdingRecords.length + " 条持仓 · 本机保存");
+    try {
+      element("undoHoldingDelete").hidden = !localStorage.getItem(HOLDING_TRASH_KEY);
+      element("restoreHoldingBackup").hidden = !localStorage.getItem(HOLDING_RECOVERY_KEY);
+    } catch (error) { /* Storage error is displayed by the save path. */ }
   }
   function loadHoldingRecord(recordId) {
     var record = findHoldingRecord(recordId);
@@ -2149,7 +2192,7 @@
     savedRecordSignature = holdingStateSignature(record.values, record.feeSettings, record.scenarios);
     pendingDeleteId = null;
     persistHoldingRecords();
-    setCalculatorState(record.values, record.feeSettings, true);
+    setCalculatorState(Object.assign({}, record.values, {_costTrail:record.costTrail}), record.feeSettings, true);
     updateScenarioCount();
     updateSavedStateUI();
     closeDialog(holdingBookDialog);
@@ -2157,6 +2200,11 @@
   }
 
   function deleteHoldingRecord(recordId) {
+    var deleted = findHoldingRecord(recordId);
+    if (!deleted) return;
+    try {
+      localStorage.setItem(HOLDING_TRASH_KEY, JSON.stringify(deleted));
+    } catch (error) { showCopyToast("无法创建撤销副本，已停止删除", true); return; }
     holdingRecords = holdingRecords.filter(function (record) { return record.id !== recordId; });
     if (currentRecordId === recordId) {
       currentRecordId = null;
@@ -2184,6 +2232,7 @@
     updateSavedStateUI();
     closeDialog(holdingBookDialog);
     closeDialog(unsavedDialog);
+    setMobilePage("ticket", true);
     element("stockCode").focus();
     showCopyToast("已新建空白测算", false);
   }
@@ -2209,6 +2258,8 @@
     }
     pendingUnsavedAction = action;
     var isNew = action.type === "new";
+    element("unsavedSaveError").hidden = true;
+    element("unsavedSaveError").textContent = "";
     setText("unsavedPromptTitle", isNew ? "要先保存这只股票吗？" : "切换持仓前，要保存当前修改吗？");
     setText("unsavedPromptText", isNew
       ? "保存后可在持仓簿继续测算；不保存则会清空当前参数。"
@@ -2240,11 +2291,32 @@
     try {
       var saved = Object.assign({}, input, {
         feeSettings: undefined,
-        _feeSettings: Object.assign({}, feeSettings)
+        _feeSettings: Object.assign({}, feeSettings),
+        _costTrail: window.CostTrail.normalize(costTrail)
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      // Keep the entire active holding in sync, not just the global last-open form.
+      var record = findHoldingRecord(currentRecordId);
+      if (record) {
+        var values = captureFormValues();
+        var settings = normalizedFeeSettings(feeSettings, currentMarket);
+        var scenarioState = normalizedScenarios(scenarios);
+        var history = window.CostTrail.normalize(costTrail);
+        var signature = holdingStateSignature(values, settings, scenarioState);
+        if (holdingStorageFailed || signature !== savedRecordSignature || JSON.stringify(history) !== JSON.stringify(record.costTrail)) {
+          record.market = currentMarket;
+          record.values = values;
+          record.feeSettings = settings;
+          record.scenarios = scenarioState;
+          record.costTrail = history;
+          record.updatedAt = Date.now();
+          savedRecordSignature = signature;
+          persistHoldingRecords();
+        }
+      }
     } catch (error) {
-      // The calculator remains usable when storage is unavailable.
+      holdingStorageFailed = true;
+      element("holdingStorageError").hidden = false;
     }
   }
 
@@ -2293,10 +2365,14 @@
   }
 
 
+  element('resultShareButton').addEventListener('click',shareCurrentPlan);
+
   function update() {
+    formatCurrentCostInput();
     var input = getInputs();
     var result = calculateCosts(input);
     var isUs = input.market === "us";
+    element('resultShareButton').disabled = !!result.error;
 
     setText("mobileResultPreview", result.error
       ? "参数未完成"
@@ -2337,7 +2413,11 @@
       ? marketConfig(input.market).name + "费用自动估算"
       : "已含双边费用");
 
-    setText("newDilutedCost", result.newDilutedCost.toFixed(2));
+    var costOutput=element("newDilutedCost");
+    var nextCostText=result.newDilutedCost.toFixed(2);
+    var costChanged=costOutput.textContent!==nextCostText;
+    setText("newDilutedCost", nextCostText);
+    if(costChanged)animateFeedback(costOutput,[{opacity:.55,transform:"translateY(3px)"},{opacity:1,transform:"translateY(0)"}],{duration:170,easing:"ease-out"});
     setText("finalShares", formatNumber(result.finalShares, 0, input.market) + " 股");
     setText("recoverableCost", formatMoney(result.recoverableCost, input.market));
     setText("totalPnl", formatSignedMoney(result.totalPnl, input.market));
@@ -2378,22 +2458,29 @@
       + " + (" + compactNumber(input.buyShares) + " × " + compactNumber(input.buyPrice) + " + " + compactNumber(result.appliedBuyFee) + "))"
       + " ÷ " + compactNumber(result.finalShares) + " = " + result.newDilutedCost.toFixed(2)
     );
+    setText("chartOriginalCost", formatMoney(input.currentCost, input.market));
+    setText("chartNewCost", formatMoney(result.newDilutedCost, input.market));
 
     updateStages(input, result);
     renderTargetPlan(input, result);
     renderPlanComparison(input, result);
-    updatePricePosition(input, result);
-    drawChart(input, result);
+    drawCostTrail(input, result);
     if (feeDialog.open || feeDialog.hasAttribute("open")) {
       refreshFeeDialog();
     }
     saveInputs(input);
     updateSavedStateUI();
-    saveToHistory(input, result);
   }
   sellRange.addEventListener("input", function () {
     sellPriceInput.value = sellRange.value;
     update();
+  });
+  element("confirmCostTrail").addEventListener("click",confirmCostTrail);
+  element("continueAfterSale").addEventListener("click",continueAfterSale);
+  element("undoCostTrail").addEventListener("click",undoCostTrail);
+  element("restoreTrailBaseline").addEventListener("click",function(){
+    if(!costTrail)return;var last=costTrail.nodes[costTrail.nodes.length-1];
+    setCalculatorState(Object.assign({},captureFormValues(),{market:costTrail.market,stockCode:costTrail.stockCode,stockName:costTrail.stockName,currentShares:last.shares,currentCost:last.cost,_costTrail:costTrail}),feeSettings,true);
   });
   sellPriceInput.addEventListener("input", function () {
     syncRangeFromNumber(sellRange, sellPriceInput);
@@ -2410,6 +2497,11 @@
   targetCostInput.addEventListener("input", function () {
     update();
   });
+  element("currentCost").addEventListener("input", function () {
+    delete this.dataset.exactCost;
+    delete this.dataset.costDisplay;
+  });
+  element("currentCost").addEventListener("blur", formatCurrentCostInput);
   form.addEventListener("input", function (event) {
     cancelResetConfirmation();
     if (event.target !== sellRange && event.target !== buyRange
@@ -2425,9 +2517,6 @@
   });
   copyFeedbackEmailButton.addEventListener("click", function () {
     copyText("imurio@163.com", "邮箱已复制");
-  });
-  copyWechatButton.addEventListener("click", function () {
-    copyText("idemising", "微信号已复制");
   });
   resetButton.addEventListener("click", function () {
     if (!resetArmed) {
@@ -2541,6 +2630,25 @@
       closeDialog(importBackupDialog);
     }
   });
+  ["holdingSearch", "holdingMarketFilter", "holdingSort"].forEach(function (id) {
+    element(id).addEventListener(id === "holdingSearch" ? "input" : "change", renderHoldingBook);
+  });
+  element("undoHoldingDelete").addEventListener("click", function () {
+    try {
+      var record = normalizeHoldingRecord(JSON.parse(localStorage.getItem(HOLDING_TRASH_KEY)));
+      if (!record) throw new Error("invalid-trash");
+      if (!findHoldingRecord(record.id)) holdingRecords.push(record);
+      if (!persistHoldingRecords()) { updateSavedStateUI(); return; }
+      localStorage.removeItem(HOLDING_TRASH_KEY);
+      renderHoldingBook();
+      showCopyToast("已恢复最近删除的持仓", false);
+    } catch (error) { showCopyToast("无法恢复删除的持仓，请检查浏览器存储", true); }
+  });
+  element("restoreHoldingBackup").addEventListener("click", function () {
+    try {
+      previewBackupImport(normalizeBackupPayload(JSON.parse(localStorage.getItem(HOLDING_RECOVERY_KEY))));
+    } catch (error) { showCopyToast("恢复副本无法读取，请选择导出的备份文件", true); }
+  });
   holdingList.addEventListener("click", function (event) {
     var actionButton = event.target.closest("button[data-holding-action]");
     var card = event.target.closest("[data-record-id]");
@@ -2551,6 +2659,27 @@
     if (actionButton.dataset.holdingAction === "load") {
       pendingDeleteId = null;
       requestMeasurementAction({ type: "load", recordId: recordId });
+    } else if (actionButton.dataset.holdingAction === "rename") {
+      var record = findHoldingRecord(recordId);
+      var name = card.querySelector("[data-holding-name]").value.trim().slice(0, 80);
+      record.values.stockName = name;
+      if (record.costTrail) record.costTrail.stockName = name;
+      record.updatedAt = Date.now();
+      if (recordId === currentRecordId) {
+        element("stockName").value = name;
+        if (costTrail) costTrail.stockName = name;
+        update();
+      }
+      persistHoldingRecords(); updateSavedStateUI(); renderHoldingBook();
+      showCopyToast(holdingStorageFailed ? "名称尚未保存，请导出备份" : "名称已更新", holdingStorageFailed);
+    } else if (actionButton.dataset.holdingAction === "duplicate") {
+      var copy = normalizeHoldingRecord(JSON.parse(JSON.stringify(findHoldingRecord(recordId))));
+      copy.id = createHoldingId(); copy.updatedAt = Date.now();
+      copy.values.stockName = (copy.values.stockName || copy.values.stockCode) + " · 副本";
+      if (copy.costTrail) copy.costTrail.stockName = copy.values.stockName;
+      holdingRecords.push(copy);
+      persistHoldingRecords(); renderHoldingBook(); updateSavedStateUI();
+      showCopyToast(holdingStorageFailed ? "副本尚未保存，请导出备份" : "已复制完整测算，可在持仓簿选择", holdingStorageFailed);
     } else if (actionButton.dataset.holdingAction === "delete") {
       if (pendingDeleteId === recordId) {
         deleteHoldingRecord(recordId);
@@ -2579,9 +2708,20 @@
     } else if (action === "discard") {
       closeDialog(unsavedDialog);
       performPendingUnsavedAction();
-    } else if (action === "save" && saveCurrentHolding()) {
-      closeDialog(unsavedDialog);
-      performPendingUnsavedAction();
+    } else if (action === "save") {
+      update();
+      var reason = !latestInput || !latestResult
+        ? "当前参数尚未完成，暂时无法保存。可以取消后补全参数，或选择不保存直接新建。"
+        : (!latestInput.stockCode && !latestInput.stockName
+          ? "保存需要填写股票代码或名称。可以取消后填写，或选择不保存直接新建。"
+          : "");
+      if (reason) {
+        setText("unsavedSaveError", reason);
+        element("unsavedSaveError").hidden = false;
+      } else if (saveCurrentHolding()) {
+        closeDialog(unsavedDialog);
+        performPendingUnsavedAction();
+      }
     }
   });
   copyResultButton.addEventListener("click", copyCurrentResult);
@@ -2609,11 +2749,10 @@
     update();
   });
   document.addEventListener("click", function (event) {
-    document.querySelectorAll(".more-menu[open]").forEach(function (menu) {
-      if (!event.target.closest(".more-menu")) {
-        menu.removeAttribute("open");
-      }
-    });
+    if (chartHelp && !chartHelp.contains(event.target)) {
+      chartHelp.classList.remove("is-open");
+      chartHelpTrigger.setAttribute("aria-expanded", "false");
+    }
     if (!clearPlanMenu.hidden && !event.target.closest(".clear-plan-control")) {
       setClearPlanMenuOpen(false);
     }
@@ -2627,68 +2766,20 @@
       }
     }
   });
+  chartHelpTrigger.addEventListener("click", function () {
+    var isOpen = chartHelp.classList.toggle("is-open");
+    chartHelpTrigger.setAttribute("aria-expanded", String(isOpen));
+  });
 
   document.addEventListener("keydown", function (event) {
-    // Escape key handling
-    if (event.key === "Escape") {
-      document.querySelectorAll(".more-menu[open]").forEach(function (menu) {
-        menu.removeAttribute("open");
-      });
+    if (event.key === "Escape" && chartHelp && chartHelp.classList.contains("is-open")) {
+      chartHelp.classList.remove("is-open");
+      chartHelpTrigger.setAttribute("aria-expanded", "false");
+      chartHelpTrigger.blur();
     }
     if (event.key === "Escape" && !clearPlanMenu.hidden) {
       setClearPlanMenuOpen(false);
       clearPlanButton.focus();
-    }
-
-    // Keyboard shortcuts (when not in input fields)
-    var isInputFocused = document.activeElement.tagName === "INPUT" ||
-                         document.activeElement.tagName === "TEXTAREA" ||
-                         document.activeElement.isContentEditable;
-
-    if (!isInputFocused && !event.metaKey && !event.altKey) {
-      // Ctrl/Cmd + S: Save to holding book
-      if ((event.ctrlKey || event.metaKey) && event.key === "s") {
-        event.preventDefault();
-        if (latestInput && latestResult && !latestResult.error) {
-          saveHoldingButton.click();
-        }
-        return;
-      }
-
-      // Ctrl/Cmd + E: Export result
-      if ((event.ctrlKey || event.metaKey) && event.key === "e") {
-        event.preventDefault();
-        exportResultButton.click();
-        return;
-      }
-
-      // Ctrl/Cmd + H: Open history
-      if ((event.ctrlKey || event.metaKey) && event.key === "h") {
-        event.preventDefault();
-        historyButton.click();
-        return;
-      }
-
-      // Ctrl/Cmd + K: Open holding book
-      if ((event.ctrlKey || event.metaKey) && event.key === "k") {
-        event.preventDefault();
-        holdingBookButton.click();
-        return;
-      }
-
-      // Ctrl/Cmd + N: New measurement
-      if ((event.ctrlKey || event.metaKey) && event.key === "n") {
-        event.preventDefault();
-        newMeasurementButton.click();
-        return;
-      }
-
-      // ? key: Show shortcuts help
-      if (event.key === "?" && !event.shiftKey) {
-        event.preventDefault();
-        showKeyboardShortcuts();
-        return;
-      }
     }
   });
 
@@ -2697,7 +2788,7 @@
       closeDialog(button.closest("dialog"));
     });
   });
-  [basisDialog, feeDialog, scenarioDialog, holdingBookDialog, historyDialog, shortcutsDialog, supportDialog].forEach(function (dialog) {
+  [basisDialog, feeDialog, scenarioDialog, holdingBookDialog, supportDialog].forEach(function (dialog) {
     dialog.addEventListener("click", function (event) {
       if (event.target === dialog) {
         closeDialog(dialog);
@@ -2709,36 +2800,7 @@
   applyTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light", false);
   fitWorkspaceToWindow();
 
-  // History event listeners
-  historyButton.addEventListener("click", function () {
-    openDialog(historyDialog);
-    renderHistoryList();
-  });
-
-  clearHistoryButton.addEventListener("click", function () {
-    if (confirm("确定要清空所有历史记录吗？此操作不可撤销。")) {
-      historyRecords = [];
-      persistHistory();
-      renderHistoryList();
-      updateHistoryCount();
-      showCopyToast("历史记录已清空", false);
-    }
-  });
-
-  exportResultButton.addEventListener("click", function () {
-    if (!latestInput || !latestResult) {
-      showCopyToast("请先完成计算", false);
-      return;
-    }
-    exportResultAsCSV(latestInput, latestResult);
-  });
-
-  shortcutsButton.addEventListener("click", function () {
-    openDialog(shortcutsDialog);
-  });
-
   loadHoldingRecords();
-  loadHistory();
   var loadedSharedState = loadSharedState();
   if (loadedSharedState) {
     currentRecordId = null;
@@ -2755,248 +2817,9 @@
   update();
   updateScenarioCount();
   updateHoldingCount();
-  updateHistoryCount();
   updateSavedStateUI();
   if (loadedSharedState) {
     showCopyToast("已载入分享方案", false);
-  }
-
-  // History functions
-  function loadHistory() {
-    try {
-      var stored = localStorage.getItem(HISTORY_STORAGE_KEY);
-      if (stored) {
-        historyRecords = JSON.parse(stored);
-      }
-    } catch (e) {
-      historyRecords = [];
-    }
-  }
-
-  function persistHistory() {
-    try {
-      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(historyRecords));
-    } catch (e) {}
-  }
-
-  function saveToHistory(input, result) {
-    if (!result || result.error) return;
-
-    var historyItem = {
-      id: Date.now() + "-" + Math.random().toString(36).substr(2, 9),
-      timestamp: Date.now(),
-      market: input.market,
-      stockCode: input.stockCode || "",
-      stockName: input.stockName || "",
-      currentShares: input.currentShares,
-      currentCost: input.currentCost,
-      marketPrice: input.marketPrice,
-      sellShares: input.sellShares,
-      sellPrice: input.sellPrice,
-      buyShares: input.buyShares,
-      buyPrice: input.buyPrice,
-      newDilutedCost: result.newDilutedCost,
-      finalShares: result.finalShares,
-      totalPnl: result.totalPnl,
-      netCashFlow: result.netCashFlow,
-      costDelta: result.costDelta
-    };
-
-    historyRecords.unshift(historyItem);
-
-    if (historyRecords.length > MAX_HISTORY_ITEMS) {
-      historyRecords = historyRecords.slice(0, MAX_HISTORY_ITEMS);
-    }
-
-    persistHistory();
-    updateHistoryCount();
-  }
-
-  function updateHistoryCount() {
-    if (historyCount) {
-      historyCount.textContent = historyRecords.length;
-    }
-  }
-
-  function renderHistoryList() {
-    if (!historyList) return;
-
-    if (historyRecords.length === 0) {
-      historyList.innerHTML = '<div class="history-empty">' +
-        '<svg viewBox="0 0 48 48" aria-hidden="true" style="width: 48px; height: 48px; opacity: 0.3;">' +
-        '<path d="M24 10v14l8 5M10.5 15A14 14 0 1 1 9 24M10.5 15V7m0 8h8" fill="none" stroke="currentColor" stroke-width="2"/>' +
-        '</svg>' +
-        '<p>暂无历史记录</p>' +
-        '<small>每次计算后会自动保存，最多保留 50 条记录</small>' +
-        '</div>';
-      return;
-    }
-
-    var html = "";
-    historyRecords.forEach(function (item) {
-      var market = marketConfig(item.market);
-      var timeStr = formatHistoryTime(item.timestamp);
-      var title = item.stockName || item.stockCode || "未命名";
-
-      html += '<div class="history-item" data-history-id="' + item.id + '">' +
-        '<div class="history-item-icon">' + market.shortName + '</div>' +
-        '<div class="history-item-content">' +
-        '<div class="history-item-header">' +
-        '<span class="history-item-title">' + escapeHtml(title) + '</span>' +
-        '<span class="history-item-market">' + market.name + '</span>' +
-        '</div>' +
-        '<div class="history-item-details">' +
-        '<div class="history-item-detail">' +
-        '<span class="history-item-detail-label">新成本</span>' +
-        '<span class="history-item-detail-value">' + formatMoney(item.newDilutedCost, item.market) + '</span>' +
-        '</div>' +
-        '<div class="history-item-detail">' +
-        '<span class="history-item-detail-label">盈亏</span>' +
-        '<span class="history-item-detail-value ' + (item.totalPnl >= 0 ? 'positive' : 'negative') + '">' +
-        formatSignedMoney(item.totalPnl, item.market) + '</span>' +
-        '</div>' +
-        '<div class="history-item-detail">' +
-        '<span class="history-item-detail-label">现金流</span>' +
-        '<span class="history-item-detail-value">' + formatMoney(Math.abs(item.netCashFlow), item.market) + '</span>' +
-        '</div>' +
-        '</div>' +
-        '</div>' +
-        '<div class="history-item-meta">' +
-        '<span class="history-item-time">' + timeStr + '</span>' +
-        '<div class="history-item-actions">' +
-        '<button class="history-item-action load" data-action="load" title="载入此记录">↻</button>' +
-        '<button class="history-item-action delete" data-action="delete" title="删除此记录">×</button>' +
-        '</div>' +
-        '</div>' +
-        '</div>';
-    });
-
-    historyList.innerHTML = html;
-
-    // Attach event listeners
-    historyList.querySelectorAll(".history-item-action").forEach(function (button) {
-      button.addEventListener("click", function (e) {
-        e.stopPropagation();
-        var action = button.getAttribute("data-action");
-        var itemId = button.closest(".history-item").getAttribute("data-history-id");
-
-        if (action === "load") {
-          loadFromHistory(itemId);
-        } else if (action === "delete") {
-          deleteHistoryItem(itemId);
-        }
-      });
-    });
-  }
-
-  function loadFromHistory(itemId) {
-    var item = historyRecords.find(function (h) { return h.id === itemId; });
-    if (!item) return;
-
-    currentMarket = item.market;
-    applyMarketPresentation();
-
-    currentSharesInput.value = item.currentShares;
-    currentCostInput.value = item.currentCost;
-    marketPriceInput.value = item.marketPrice;
-    sellSharesInput.value = item.sellShares;
-    sellPriceInput.value = item.sellPrice;
-    buySharesInput.value = item.buyShares;
-    buyPriceInput.value = item.buyPrice;
-    stockCodeInput.value = item.stockCode || "";
-    stockNameInput.value = item.stockName || "";
-
-    syncRangeFromNumber(sellRange, sellPriceInput);
-    syncRangeFromNumber(buyRange, buyPriceInput);
-    update();
-
-    closeDialog(historyDialog);
-    showCopyToast("已载入历史记录", false);
-  }
-
-  function deleteHistoryItem(itemId) {
-    historyRecords = historyRecords.filter(function (h) { return h.id !== itemId; });
-    persistHistory();
-    renderHistoryList();
-    updateHistoryCount();
-  }
-
-  function formatHistoryTime(timestamp) {
-    var now = Date.now();
-    var diff = now - timestamp;
-    var minutes = Math.floor(diff / 60000);
-    var hours = Math.floor(diff / 3600000);
-    var days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return "刚刚";
-    if (minutes < 60) return minutes + "分钟前";
-    if (hours < 24) return hours + "小时前";
-    if (days < 7) return days + "天前";
-
-    var date = new Date(timestamp);
-    return date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
-  }
-
-  function escapeHtml(text) {
-    var div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  function exportResultAsCSV(input, result) {
-    var market = marketConfig(input.market);
-    var timestamp = new Date().toLocaleString("zh-CN");
-    var stockName = input.stockName || input.stockCode || "未命名";
-
-    var csvContent = "﻿"; // BOM for Excel UTF-8 recognition
-    csvContent += "CostBuddy 测算结果\n";
-    csvContent += "导出时间," + timestamp + "\n";
-    csvContent += "市场," + market.name + "\n";
-    csvContent += "股票名称," + stockName + "\n\n";
-
-    csvContent += "输入参数\n";
-    csvContent += "项目,数值\n";
-    csvContent += "当前持股," + input.currentShares + " 股\n";
-    csvContent += "当前成本," + market.symbol + input.currentCost.toFixed(2) + "\n";
-    csvContent += "市场价格," + market.symbol + input.marketPrice.toFixed(2) + "\n";
-    csvContent += "卖出股数," + input.sellShares + " 股\n";
-    csvContent += "卖出价格," + market.symbol + input.sellPrice.toFixed(2) + "\n";
-    csvContent += "卖出手续费," + market.symbol + input.sellFee.toFixed(2) + "\n";
-    csvContent += "买入股数," + input.buyShares + " 股\n";
-    csvContent += "买入价格," + market.symbol + input.buyPrice.toFixed(2) + "\n";
-    csvContent += "买入手续费," + market.symbol + input.buyFee.toFixed(2) + "\n\n";
-
-    csvContent += "计算结果\n";
-    csvContent += "项目,数值\n";
-    csvContent += "新回本成本," + market.symbol + result.newDilutedCost.toFixed(2) + "\n";
-    csvContent += "最终持股," + result.finalShares + " 股\n";
-    csvContent += "可回收成本," + market.symbol + result.recoverableCost.toFixed(2) + "\n";
-    csvContent += "盈亏," + market.symbol + result.totalPnl.toFixed(2) + "\n";
-    csvContent += "成本变化," + market.symbol + result.costDelta.toFixed(2) + "\n";
-    csvContent += "净现金流," + market.symbol + result.netCashFlow.toFixed(2) + "\n";
-    csvContent += "总手续费," + market.symbol + result.totalFees.toFixed(2) + "\n";
-
-    if (result.breakEvenGap !== null) {
-      csvContent += "回本缺口," + result.breakEvenGap.toFixed(2) + "%\n";
-    }
-
-    var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    var link = document.createElement("a");
-    var url = URL.createObjectURL(blob);
-    var filename = "CostBuddy_" + stockName + "_" + new Date().getTime() + ".csv";
-
-    link.setAttribute("href", url);
-    link.setAttribute("download", filename);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    showCopyToast("已导出 CSV 文件", false);
-  }
-
-  function showKeyboardShortcuts() {
-    openDialog(shortcutsDialog);
   }
 
   window.HKDilutedCostCalculator = {
