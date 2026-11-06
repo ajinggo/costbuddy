@@ -1088,7 +1088,7 @@
 
   function updateDocumentTitle(input) {
     var label = stockLabel(input);
-    document.title = label ? label + " · 小算盘 · CostBuddy" : "小算盘 · CostBuddy";
+    document.title = label ? label + " · CostBuddy 你的做T搭子" : "CostBuddy 你的做T搭子";
   }
 
   function updateResultInsight(input, result) {
@@ -1316,7 +1316,7 @@
       : (result.netCashFlow > 0
         ? "净收回 " + formatMoney(result.netCashFlow, input.market)
         : "净投入 " + formatMoney(Math.abs(result.netCashFlow), input.market));
-    var lines = ["小算盘 · CostBuddy", "市场：" + marketConfig(input.market).name];
+    var lines = ["CostBuddy 你的做T搭子", "市场：" + marketConfig(input.market).name];
     if (stockLabel(input)) {
       lines.push("证券：" + stockLabel(input));
     }

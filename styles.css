@@ -1069,7 +1069,7 @@ input[type="range"]::-webkit-slider-thumb {
   stroke-linejoin: round;
 }
 
-/* Friendly visual identity for 小算盘 / costbuddy. */
+/* Friendly visual identity for CostBuddy 你的做T搭子. */
 :root {
   --bg: #f5f6fb;
   --canvas: #fffefe;

@@ -19,7 +19,7 @@
     var title=sell?'交易成本测算':buy?'加仓成本测算':'当前持仓快照';
     ctx.clearRect(0,0,1080,1350);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,1080,1350);
     var glow=ctx.createRadialGradient(1000,0,0,1000,0,700);glow.addColorStop(0,'#e8f0fc');glow.addColorStop(1,'#fafaf800');ctx.fillStyle=glow;ctx.fillRect(0,0,1080,800);
-    text('CostBuddy',80,106,34,'#1d1d1f',650);text('小算盘',285,106,23,'#77777d');
+    text('CostBuddy',80,106,34,'#1d1d1f',650);text('你的做T搭子',285,106,23,'#77777d');
     text(i.market==='us'?'美股 · USD':i.market==='cn'?'A 股 · CNY':'港股 · HKD',800,106,24,'#6e6e73');line(145);
     text((i.stockName||'未命名证券')+(i.stockCode?' · '+i.stockCode:''),80,246,44,'#1d1d1f',600,920);
     text(title,80,300,26,'#6e6e73');

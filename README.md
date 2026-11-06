@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./assets/github-social-preview.svg" alt="CostBuddy 小算盘 — 港股与美股持仓回本成本测算工具" width="100%" />
+<img src="./assets/github-social-preview.svg" alt="CostBuddy 你的做T搭子 — 港股与美股持仓回本成本测算工具" width="100%" />
 
 <br />
 
@@ -285,7 +285,7 @@ http://localhost:8765/
 <br />
 <br />
 
-Made for clearer cost decisions · **CostBuddy 小算盘**
+Made for clearer cost decisions · **CostBuddy 你的做T搭子**
 
 [返回顶部](#costbuddy)
 

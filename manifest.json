@@ -1,6 +1,6 @@
 {
-  "name": "小算盘 · CostBuddy",
-  "short_name": "小算盘",
+  "name": "CostBuddy 你的做T搭子",
+  "short_name": "做T搭子",
   "description": "轻松测算港股、A股与美股买卖后的资金回本成本，支持费用估算、目标反推、方案对比和分享",
   "start_url": "/",
   "display": "standalone",

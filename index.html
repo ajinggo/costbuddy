@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f5f7">
   <script>try{if(localStorage.getItem("costbuddy-theme-v1")==="dark"){document.documentElement.dataset.theme="dark";document.querySelector('meta[name="theme-color"]').content="#0f1419";}}catch(e){}</script>
-  <meta name="description" content="小算盘（CostBuddy）：轻松测算港股、美股与 A 股买卖后的资金回本成本，支持费用估算、目标反推、方案对比和分享。">
-  <meta name="apple-mobile-web-app-title" content="小算盘">
-  <title>小算盘 · CostBuddy</title>
+  <meta name="description" content="CostBuddy 你的做T搭子：轻松测算港股、美股与 A 股买卖后的资金回本成本，支持费用估算、目标反推、方案对比和分享。">
+  <meta name="apple-mobile-web-app-title" content="CostBuddy 做T搭子">
+  <title>CostBuddy 你的做T搭子</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css?v=20261106-apple-white">
   <link rel="stylesheet" href="apple-ui.css?v=20261106-apple-white">
@@ -30,7 +30,7 @@
             </div>
             <div class="brand-copy">
               <p class="eyebrow">CostBuddy</p>
-              <h1><span>CostBuddy</span> <span>小算盘</span></h1>
+              <h1><span>CostBuddy</span> <span>你的做T搭子</span></h1>
               <p class="lead">成本算得清，交易更从容</p>
             </div>
           </div>
@@ -759,31 +759,31 @@
             <span class="support-card-icon" aria-hidden="true">
               <svg viewBox="0 0 20 20"><path d="M10 16.4S3.3 12.2 3.3 7.6A3.6 3.6 0 0 1 10 5.7a3.6 3.6 0 0 1 6.7 1.9c0 4.6-6.7 8.8-6.7 8.8Z"/></svg>
             </span>
-            <div><strong id="rewardCardTitle">支付宝支持</strong><small>支持小算盘的持续维护</small></div>
+            <div><strong id="rewardCardTitle">支付宝支持</strong><small>支持 CostBuddy 的持续维护</small></div>
           </div>
           <a class="support-qr-link" href="assets/alipay-support.jpg" target="_blank" rel="noopener" aria-label="打开支付宝收款码原图">
             <img class="support-qr-image" src="assets/alipay-support.jpg" width="1170" height="1755" alt="作者提供的支付宝收款码，请使用支付宝扫一扫并核对收款人" decoding="async">
           </a>
           <p class="reward-copy">打开支付宝扫一扫，金额随心。手机端可保存图片后，在支付宝扫一扫中尝试从相册识别；付款前请核对收款人。</p>
           <div class="support-actions alipay-actions">
-            <a class="dialog-primary support-download" href="assets/alipay-support.jpg" download="小算盘-支付宝收款码.jpg">保存收款码</a>
+            <a class="dialog-primary support-download" href="assets/alipay-support.jpg" download="CostBuddy-支付宝收款码.jpg">保存收款码</a>
             <a class="support-original-link" href="assets/alipay-support.jpg" target="_blank" rel="noopener">查看原图 ↗</a>
           </div>
 
         </section>
       </div>
       <p class="support-privacy"><strong>测算说明</strong><br>结果仅用于持仓测算，不构成投资建议；暂不包含汇率及其他费用。股数为 0 时，该侧手续费不计入。</p>
-      <p class="support-intro">如果小算盘对你有帮助，欢迎通过支付宝自愿支持项目维护。使用建议与误付等问题，可通过邮箱联系。</p>
+      <p class="support-intro">如果 CostBuddy 对你有帮助，欢迎通过支付宝自愿支持项目维护。使用建议与误付等问题，可通过邮箱联系。</p>
     </div>
     <div class="dialog-actions dialog-actions-split support-dialog-footer">
-      <span>CostBuddy · 小算盘</span>
+      <span>CostBuddy · 你的做T搭子</span>
       <button class="dialog-primary" type="button" data-close-dialog>完成</button>
     </div>
   </dialog>
 
 <dialog class="app-dialog announcement-dialog" id="announcementDialog" aria-labelledby="announcementTitle">
-<div class="dialog-header"><h2 id="announcementTitle">小算盘公告</h2><button class="dialog-close" id="announcementClose" type="button" aria-label="关闭公告">×</button></div>
-<div class="dialog-body"><section class="announcement-update"><div class="announcement-update-heading"><h3>本次更新</h3><time datetime="2026-11-03">2026 年 11 月 3 日</time></div><ul><li>修复分享卡片隐私选项与保存图片不同步的问题。</li><li>优化分享卡片完整预览。</li><li>调整支持与反馈布局，适配桌面和手机。</li><li>调整成本轨迹布局，新增独立加仓历史列表。</li><li>产品展示页支持模拟光标点击演示。</li></ul></section><h3>使用与测算说明</h3><section id="cnAnnouncementNote"><div class="cn-note-heading"><h3>A 股测算说明</h3><button class="info-button" id="cnNoteTrigger" type="button" aria-label="查看 A 股测算说明" aria-expanded="false" aria-controls="cnMarketNote">!</button></div><p id="cnMarketNote" class="cn-market-note" hidden>A 股费用请手动填写券商实际总费用（含佣金、适用税费等）；默认 0 表示未计费用。每手默认 100 股，可按证券规则调整。测算不校验 T+1 或实际可卖数量。</p></section><p>小算盘用于估算买入、卖出后的持仓成本，结果仅供个人测算参考，不构成投资建议。</p><p>请按实际情况填写价格、股数与费用；测算暂不包含汇率及其他费用。股数为 0 时，该侧手续费不计入。</p><p>你可以在顶部“更多”中收起工具栏，之后随时展开。显示偏好仅保存在当前浏览器。</p></div>
+<div class="dialog-header"><h2 id="announcementTitle">CostBuddy 公告</h2><button class="dialog-close" id="announcementClose" type="button" aria-label="关闭公告">×</button></div>
+<div class="dialog-body"><section class="announcement-update"><div class="announcement-update-heading"><h3>本次更新</h3><time datetime="2026-11-03">2026 年 11 月 3 日</time></div><ul><li>修复分享卡片隐私选项与保存图片不同步的问题。</li><li>优化分享卡片完整预览。</li><li>调整支持与反馈布局，适配桌面和手机。</li><li>调整成本轨迹布局，新增独立加仓历史列表。</li><li>产品展示页支持模拟光标点击演示。</li></ul></section><h3>使用与测算说明</h3><section id="cnAnnouncementNote"><div class="cn-note-heading"><h3>A 股测算说明</h3><button class="info-button" id="cnNoteTrigger" type="button" aria-label="查看 A 股测算说明" aria-expanded="false" aria-controls="cnMarketNote">!</button></div><p id="cnMarketNote" class="cn-market-note" hidden>A 股费用请手动填写券商实际总费用（含佣金、适用税费等）；默认 0 表示未计费用。每手默认 100 股，可按证券规则调整。测算不校验 T+1 或实际可卖数量。</p></section><p>CostBuddy 用于估算买入、卖出后的持仓成本，结果仅供个人测算参考，不构成投资建议。</p><p>请按实际情况填写价格、股数与费用；测算暂不包含汇率及其他费用。股数为 0 时，该侧手续费不计入。</p><p>你可以在顶部“更多”中收起工具栏，之后随时展开。显示偏好仅保存在当前浏览器。</p></div>
 <div class="dialog-actions announcement-actions"><label><input id="announcementDismiss" type="checkbox">不再自动弹出本条公告</label><button class="dialog-primary" id="announcementConfirm" type="button">知道了</button></div></dialog>
   <div class="copy-toast" id="copyToast" role="status" aria-live="polite" hidden>测算结果已复制</div>
 

@@ -1,6 +1,6 @@
 <div align="center">
 
-# **costbuddy（小算盘）试用说明书**
+# **CostBuddy 你的做T搭子 · 试用说明书**
 
 ### 港股持仓资金回本成本测算工具
 

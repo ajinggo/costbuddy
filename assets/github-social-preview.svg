@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
-  <title id="title">CostBuddy 小算盘</title>
+  <title id="title">CostBuddy 你的做T搭子</title>
   <desc id="desc">港股与美股做 T、加仓、减仓后的回本成本测算与方案预估</desc>
   <defs>
     <linearGradient id="bg" x1="36" y1="24" x2="1232" y2="620" gradientUnits="userSpaceOnUse">
@@ -58,7 +58,7 @@
   </g>
 
   <text x="190" y="112" fill="#FFFFFF" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="47" font-weight="830" letter-spacing="-1.6">CostBuddy</text>
-  <text x="192" y="146" fill="#A9B9DA" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" font-weight="650">小算盘 · COST BASIS CALCULATOR</text>
+  <text x="192" y="146" fill="#A9B9DA" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" font-weight="650">你的做T搭子 · COST BASIS CALCULATOR</text>
 
   <!-- Main copy -->
   <text x="72" y="251" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="42" font-weight="800" letter-spacing="-0.8">做 T 前先测算</text>
