@@ -1,4 +1,4 @@
-const CACHE_NAME = 'costbuddy-v2';
+const CACHE_NAME = 'costbuddy-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -42,6 +42,15 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  // Always check the network for page navigations so installed apps don't
+  // remain pinned to an old cached HTML shell after a deployment.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
